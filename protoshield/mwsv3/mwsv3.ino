@@ -113,7 +113,8 @@ void loop()
   float dallasT = sensors.getTempCByIndex(0);// Why "byIndex"? 
   // You can have more than one IC on the same bus. 
   // 0 refers to the first IC on the wire 
-  Serial.print(dallasT); 
+  Serial.print("Temperature D12B80 (C): ");
+  Serial.println(dallasT); 
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Temperature D12B80 ");
@@ -141,9 +142,8 @@ void loop()
   if (event.pressure)
   {
     /* Display atmospheric pressure in hPa */
-    Serial.print("Pressure: "); 
-    Serial.print(event.pressure); 
-    Serial.println(" hPa");
+    Serial.print("Pressure (hPa): "); 
+    Serial.println(event.pressure); 
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Pressure ");
@@ -161,11 +161,11 @@ void loop()
 
   int chk = DHT11.read(DHT11PIN);
 
-  Serial.print("Read sensor: ");
+  //Serial.print("Read sensor: ");
   switch (chk)
   {
   case DHTLIB_OK: 
-    Serial.println("DHT11 OK"); 
+    //Serial.println("DHT11 OK"); 
     break;
   case DHTLIB_ERROR_CHECKSUM: 
     Serial.println("DHT11 Checksum error"); 
@@ -191,7 +191,7 @@ void loop()
   sd.print((float)DHT11.humidity,2);
   sd.print(",");
   delay(2000);
-  Serial.print("Temperature (°C): ");
+  Serial.print("Temperature (C): ");
   Serial.println((float)DHT11.temperature, 2);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -203,7 +203,7 @@ void loop()
   sd.print(",");
   delay(2000);
 
-  Serial.print("Temperature (°F): ");
+  Serial.print("Temperature (F): ");
   Serial.println(Fahrenheit(DHT11.temperature), 2);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -212,7 +212,7 @@ void loop()
   lcd.print(Fahrenheit(DHT11.temperature), 2);
   lcd.print(" F");
   delay(2000);
-  Serial.print("Temperature (°K): ");
+  Serial.print("Temperature (K): ");
   Serial.println(Kelvin(DHT11.temperature), 2);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -222,7 +222,7 @@ void loop()
   lcd.print(" K");
   //lcd.print("hello, world!");
   delay(2000);
-  Serial.print("Dew Point (°C): ");
+  Serial.print("Dew Point (C): ");
   Serial.println(dewPoint(DHT11.temperature, DHT11.humidity));
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -232,7 +232,7 @@ void loop()
   lcd.print(" C");
   //lcd.print("hello, world!");
   delay(2000);
-  Serial.print("Dew PointFast (°C): ");
+  Serial.print("Dew PointFast (C): ");
   Serial.println(dewPointFast(DHT11.temperature, DHT11.humidity));
   lcd.clear();
   lcd.setCursor(0, 0);
