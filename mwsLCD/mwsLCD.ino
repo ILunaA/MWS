@@ -23,6 +23,10 @@
 #include "HTU21D.h" //Humidity sensor
 #include <SoftwareSerial.h> //Needed for GPS
 #include <TinyGPS++.h> //GPS parsing
+#include <LiquidCrystal.h>//16x2 LCD library
+
+//This is for the 16x2 LCD
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 //this is for RTC
 int clockAddress = 0x68;  // This is the I2C address
@@ -196,6 +200,11 @@ void wspeedIRQ()
 
 void setup()
 {
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
+  lcd.print("Mobile Weather Station is up");
+  
   Serial.begin(9600);
 
   ss.begin(9600); //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
@@ -492,9 +501,7 @@ void printWeather()
   calcWeather(); //Go calc all the various sensors
 
   Serial.println();
-  //Serial.print("$,lon=");
   Serial.print(gps.location.lng(), 6);
-  //Serial.print(",lat=");
   Serial.print(",");
   Serial.print(gps.location.lat(), 6);
   //Serial.print(",altitude=");
@@ -504,24 +511,33 @@ void printWeather()
   Serial.print(",");
   Serial.print(gps.satellites.value());
 
+  lcd.setCursor(0, 1);
+  lcd.print("lon=");
+  lcd.print(gps.location.lng(), 6);
+  lcd.setCursor(0, 2);
+  lcd.print(",lat=");
+  lcd.print(gps.location.lat(), 6);
+  delay(1000);
+
   char sz[32];
-  //Serial.print(",date=");
   Serial.print(",");
   sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
   Serial.print(sz);
+
+  lcd.setCursor(0, 1);
+  lcd.print(",date=");
+  lcd.print(sz);
 
   //Serial.print(",time=");
   Serial.print(",");
   sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
   Serial.print(sz);
-
-  //Serial.print(",RTCdate=20");
-  //sprintf(sz, "%s", getDateDs1307(0));
-  //Serial.print(sz);  
-  //Serial.print(",RTCtime=");
-  //sprintf(sz, "%s", getDateDs1307(1));
-  //Serial.print(sz);  
-
+  
+  lcd.setCursor(0, 2);
+  lcd.print(",time=");
+  lcd.print(sz);
+  delay(1000);
+  
   //Serial.print(",winddir=");
   Serial.print(",");
   Serial.print(winddir);
