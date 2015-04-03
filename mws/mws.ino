@@ -437,20 +437,12 @@ float get_battery_level()
 float get_wind_speed()
 {
   float deltaTime = millis() - lastWindCheck; //750ms
-
   deltaTime /= 1000.0; //Convert to seconds
-
   float windSpeed = (float)windClicks / deltaTime; //3 / 0.750s = 4
-
   windClicks = 0; //Reset and start watching for new wind
   lastWindCheck = millis();
-
-  //windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
-
-  /* Serial.println();
-   Serial.print("Windspeed:");
-   Serial.println(windSpeed);*/
-
+  windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
+  windSpeed *= 0.44704; //5.968MPH * 0.44704 = 2.6679 m/s
   return(windSpeed);
 }
 
