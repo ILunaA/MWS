@@ -544,7 +544,6 @@ void printWeather()
   Serial.print(",");
   Serial.print(tempc, 1);
   
-  
   lcd.clear();
   lcd.print("Humidity (%)");
   lcd.setCursor(0, 2);
@@ -563,6 +562,20 @@ void printWeather()
   //Serial.print(",rainhourmm=");
   Serial.print(",");
   Serial.print(rainin, 2);
+  
+  lcd.clear();
+  lcd.print("Rain Daily (mm)");
+  lcd.setCursor(0, 2);
+  lcd.print(raindailymm);
+  delay(2000);
+  
+  lcd.clear();
+  lcd.print("Rain Hourly (mm)");
+  lcd.setCursor(0, 2);
+  lcd.print(rainhourmm);
+  delay(2000);
+  
+  
   //Serial.print(",rain5mmm=");
   Serial.print(",");
   Serial.print(rainin_5m, 2);
