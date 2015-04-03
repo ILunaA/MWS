@@ -12,7 +12,7 @@
  a wireless transmitter (such as Electric Imp).
  
  Measurements are reported once a second but windspeed and rain gauge are tied to interrupts that are
- calcualted at each report.
+ calculated at each report.
  
  This example code assumes the GP-635T GPS module is attached.
  
@@ -30,7 +30,6 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 //GPS
 TinyGPSPlus gps;
-
 static const int RXPin = 5, TXPin = 4; //GPS is attached to pin 4(TX from GPS) and pin 5(RX into GPS)
 SoftwareSerial ss(RXPin, TXPin); 
 
@@ -331,19 +330,13 @@ float get_wind_speed()
 
   //windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
 
-  /* Serial.println();
-   Serial.print("Windspeed:");
-   Serial.println(windSpeed);*/
-
   return(windSpeed);
 }
 
 //Read the wind direction sensor, return heading in degrees
 int get_wind_direction() 
 {
-  unsigned int adc;
-
-  adc = analogRead(WDIR); // get the current reading from the sensor
+  unsigned int adc = analogRead(WDIR); // get the current reading from the sensor
 
   // The following table is ADC readings for the wind direction sensor output, sorted from low to high.
   // Each threshold is the midpoint between adjacent headings. The output is degrees for that ADC reading.
@@ -563,11 +556,12 @@ void printWeather()
   Serial.print(",");
   Serial.print(rainin, 2);
   
-  lcd.clear();
-  lcd.print("Rain Daily (mm)");
-  lcd.setCursor(0, 2);
-  lcd.print(dailyrainin);
-  delay(2000);
+  //Not enough dynamic memory in UNO
+  //lcd.clear();
+  //lcd.print("Rain Daily (mm)");
+  //lcd.setCursor(0, 2);
+  //lcd.print(dailyrainin);
+  //delay(2000);
   
   lcd.clear();
   lcd.print("Rain Hourly (mm)");
@@ -582,11 +576,12 @@ void printWeather()
   Serial.print(",");
   Serial.print(Rainindi, 1);
   
-  lcd.clear();
-  lcd.print("Rain 5min (mm)");
-  lcd.setCursor(0, 2);
-  lcd.print(rainin_5m);
-  delay(2000);
+  //Not enough dynamic memory in UNO
+  //lcd.clear();
+  //lcd.print("Rain 5min (mm)");
+  //lcd.setCursor(0, 2);
+  //lcd.print(rainin_5m);
+  //delay(2000);
   
   //Serial.print(",pressure=");
   Serial.print(",");
@@ -602,21 +597,23 @@ void printWeather()
   Serial.print(",");
   Serial.print(batt_lvl, 2);
 
-  lcd.clear();
-  lcd.print("Battery Level");
-  lcd.setCursor(0, 2);
-  lcd.print(batt_lvl);
-  delay(2000);
+  //Not enough dynamic memory in UNO
+  //lcd.clear();
+  //lcd.print("Battery Level");
+  //lcd.setCursor(0, 2);
+  //lcd.print(batt_lvl);
+  //delay(2000);
 
   //Serial.print(",light_lvl=");
   Serial.print(",");
   Serial.print(light_lvl, 2);
 
-  lcd.clear();
-  lcd.print("Sunlight");
-  lcd.setCursor(0, 2);
-  lcd.print(light_lvl);
-  delay(2000);
+  //Not enough dynamic memory in UNO
+  //lcd.clear();
+  //lcd.print("Sunlight");
+  //lcd.setCursor(0, 2);
+  //lcd.print(light_lvl);
+  //delay(2000);
 
 }
 
