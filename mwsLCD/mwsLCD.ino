@@ -115,7 +115,7 @@ void rainIRQ()
 // Count rain gauge bucket tips as they occur
 // Activated by the magnet and reed switch in the rain gauge, attached to input D2
 {
-  if (millis() - rainlast > 200) // ignore switch-bounce glitches less than 20x10mS after initial edge
+  if (millis() - rainlast > 10) // ignore switch-bounce glitches less than 10mS after initial edge
   {
     rainlast = millis(); // set up for next event
     dailyrainin += 0.011*25.4; //Each dump is 0.011" of water
@@ -185,10 +185,6 @@ void setup()
   digitalWrite(STAT1, HIGH); //Blink stat LED 1 second
   delay(1000);
   digitalWrite(STAT1, LOW); //Blink stat LED
-  delay(1000);
-  digitalWrite(STAT1, HIGH); //Blink stat LED 1 second
-  delay(1000);
-  digitalWrite(STAT1, LOW); //Blink stat LED
   smartdelay(60000); //Wait 60 seconds, and gather GPS data
   minutes = gps.time.minute();
   //minutes_5m = gps.time.minute();
@@ -241,8 +237,11 @@ static void smartdelay(unsigned long ms)
   unsigned long start = millis();
   do 
   {
-    while (ss.available())
-      gps.encode(ss.read());
+      digitalWrite(STAT1, HIGH); //Blink stat LED
+      delay(250);
+      while (ss.available()) gps.encode(ss.read());
+      delay(250);
+      digitalWrite(STAT1, LOW); //Blink stat LED
   } 
   while (millis() - start < ms);
 }
