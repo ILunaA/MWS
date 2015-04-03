@@ -584,7 +584,7 @@ void printWeather()
   lcd.clear();
   lcd.print("Pressure (hPa)");
   lcd.setCursor(0, 2);
-  lcd.print(pressure);
+  lcd.print(pressure/100.0);
   delay(2000);
 
   //Serial.print(",batt_lvl=");
