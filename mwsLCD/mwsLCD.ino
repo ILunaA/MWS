@@ -480,8 +480,10 @@ void printWeather()
   //delay(2000);
   
   lcd.clear();
+  sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
   lcd.print(sz);
   lcd.setCursor(0, 2);
+  sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
   lcd.print(sz);
   lcd.print(" GMT");
   delay(4000);
