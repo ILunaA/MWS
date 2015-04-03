@@ -471,12 +471,10 @@ void printWeather()
 
   lcd.clear();
   lcd.print(F("Lon:"));
-  lcd.print(gps.location.lng(), 4);
-  lcd.print(F(" (dd.d)"));
+  lcd.print(gps.location.lng(), 6);
   lcd.setCursor(0, 2);
   lcd.print(F("Lat:"));
-  lcd.print(gps.location.lat(), 4);
-  lcd.print(F(" (dd.d)"));
+  lcd.print(gps.location.lat(), 6);
   delay(5000);
   
   lcd.clear();
