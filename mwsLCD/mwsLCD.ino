@@ -73,12 +73,15 @@ volatile byte windClicks = 0;
 //Rain over the past hour (store 1 per minute)
 //Total rain over date (store one per day)
 
+//volatiles are subject to modification by IRQs
+volatile unsigned long rainlast;
+volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes of rain
+//volatile float rain5m[5]; //Niroshan 5 float to keep rain data of 5 mnts  //Yann: added volatile
+
 byte windspdavg[120]; //120 bytes to keep track of 2 minute average
 int winddiravg[120]; //120 ints to keep track of 2 minute average
 //float windgust_10m[10]; //10 floats to keep track of 10 minute max //Yann: to check if OK
-//volatile float rain5m[5]; //Niroshan 5 float to keep rain data of 5 mnts  //Yann: added volatile
 //int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
-volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes of rain
 
 //These are all the weather values that wunderground expects:
 //int winddir = 0; // [0-360 instantaneous wind direction]
@@ -102,14 +105,7 @@ volatile float dailyrainin = 0; // [rain inches so far today in local time]
 //float light_lvl = 455; //[analog value from 0 to 1023]
 //Rain time stamp Niroshan // Has to be global variable !
 //int Rainindi=0;
-//Variables used for GPS
-//float flat, flon; // 39.015024 -102.283608686
-//unsigned long age;
-//int year;
-//byte month, day, hour, minute, second, hundredths;
 
-// volatiles are subject to modification by IRQs
-volatile unsigned long rainlast;
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -159,9 +155,9 @@ void setup()
   Serial.begin(9600);
 
   ss.begin(9600); //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
-  Serial.print("lon,lat,altitude,sats,date,GMTtime,winddir");
-  Serial.print(",windspeedms,windgustms,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m");
-  Serial.print(",humidity,tempc,raindailymm,rainhourmm,rain5mmm,rainindicate,pressure,batt_lvl,light_lvl");
+  Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
+  Serial.print(F(",windspeedms,windgustms,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
+  Serial.print(F(",humidity,tempc,raindailymm,rainhourmm,rain5mmm,rainindicate,pressure,batt_lvl,light_lvl"));
 
   pinMode(STAT1, OUTPUT); //Status LED Blue
   pinMode(STAT2, OUTPUT); //Status LED Green
@@ -190,7 +186,13 @@ void setup()
 
   // turn on interrupts
   interrupts();
-  
+  digitalWrite(STAT1, HIGH); //Blink stat LED 1 second
+  delay(1000);
+  digitalWrite(STAT1, LOW); //Blink stat LED
+  delay(1000);
+  digitalWrite(STAT1, HIGH); //Blink stat LED 1 second
+  delay(1000);
+  digitalWrite(STAT1, LOW); //Blink stat LED
   smartdelay(60000); //Wait 60 seconds, and gather GPS data
   minutes = gps.time.minute();
   //minutes_5m = gps.time.minute();

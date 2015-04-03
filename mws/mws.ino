@@ -199,9 +199,9 @@ void setup()
   Serial.begin(9600);
 
   ss.begin(9600); //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
-  Serial.print("lon,lat,altitude,sats,date,GMTtime,winddir");
-  Serial.print(",windspeedms,windgustms,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m");
-  Serial.print(",humidity,tempc,raindailymm,rainhourmm,rain5mmm,rainindicate,pressure,batt_lvl,light_lvl");
+  Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
+  Serial.print(F(",windspeedms,windgustms,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
+  Serial.print(F(",humidity,tempc,raindailymm,rainhourmm,rain5mmm,rainindicate,pressure,batt_lvl,light_lvl"));
 
   pinMode(STAT1, OUTPUT); //Status LED Blue
   pinMode(STAT2, OUTPUT); //Status LED Green
