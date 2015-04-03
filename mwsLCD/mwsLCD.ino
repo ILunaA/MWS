@@ -203,7 +203,10 @@ void setup()
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   // Print a message to the LCD.
-  lcd.print("Mobile Weather Station is up");
+  lcd.clear();
+  lcd.print("Mobile Weather");
+  lcd.setCursor(0, 2);
+  lcd.print("Station is up");
   
   Serial.begin(9600);
 
@@ -511,32 +514,38 @@ void printWeather()
   Serial.print(",");
   Serial.print(gps.satellites.value());
 
-  lcd.setCursor(0, 1);
-  lcd.print("lon=");
+  lcd.clear();
+//  lcd.setCursor(0, 1);
+  lcd.println("lon=");
   lcd.print(gps.location.lng(), 6);
-  lcd.setCursor(0, 2);
-  lcd.print(",lat=");
+  delay(1500);
+//  lcd.setCursor(0, 2);
+  lcd.clear();
+  lcd.println("lat=");
   lcd.print(gps.location.lat(), 6);
-  delay(1000);
+  delay(1500);
 
   char sz[32];
   Serial.print(",");
   sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
   Serial.print(sz);
 
-  lcd.setCursor(0, 1);
-  lcd.print(",date=");
+  lcd.clear();
+  //lcd.setCursor(0, 1);
+  lcd.println(",date=");
   lcd.print(sz);
+  delay(1500);
 
   //Serial.print(",time=");
   Serial.print(",");
   sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
   Serial.print(sz);
   
-  lcd.setCursor(0, 2);
-  lcd.print(",time=");
+  lcd.clear();
+  //lcd.setCursor(0, 2);
+  lcd.println(",time=");
   lcd.print(sz);
-  delay(1000);
+  delay(1500);
   
   //Serial.print(",winddir=");
   Serial.print(",");
