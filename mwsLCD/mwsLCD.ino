@@ -142,7 +142,7 @@ void rainIRQ()
 void wspeedIRQ()
 // Activated by the magnet in the anemometer (2 ticks per rotation), attached to input D3
 {
-  if (millis() - lastWindIRQ > 10) // Ignore switch-bounce glitches less than 10ms (142MPH max reading) after the reed switch closes
+  if (millis() - lastWindIRQ > 20) // Ignore switch-bounce glitches less than 2x10ms (142MPH/2 max reading) after the reed switch closes
   {
     lastWindIRQ = millis(); //Grab the current time
     windClicks++; //There is 1.492MPH for each click per second.
@@ -215,10 +215,8 @@ void loop()
     if(seconds_2m > 119) seconds_2m = 0;
 
     //Calc the wind speed and direction every second for 120 second to get 2 minute average
-    float currentSpeed = get_wind_speed();
-    int currentDirection = get_wind_direction();
-    windspdavg[seconds_2m] = (int)currentSpeed;
-    winddiravg[seconds_2m] = currentDirection;
+    windspdavg[seconds_2m] = (int)get_wind_speed();
+    winddiravg[seconds_2m] = get_wind_direction();
 
     seconds += millis() - lastSecond; 
     lastSecond = millis();
@@ -303,23 +301,23 @@ int get_wind_direction()
   // Each threshold is the midpoint between adjacent headings. The output is degrees for that ADC reading.
   // Note that these are not in compass degree order! See Weather Meters datasheet for more information.
 
-  if (adc < 380) return (113);
-  if (adc < 393) return (68);
-  if (adc < 414) return (90);
-  if (adc < 456) return (158);
-  if (adc < 508) return (135);
-  if (adc < 551) return (203);
-  if (adc < 615) return (180);
-  if (adc < 680) return (23);
-  if (adc < 746) return (45);
-  if (adc < 801) return (248);
-  if (adc < 833) return (225);
-  if (adc < 878) return (338);
-  if (adc < 913) return (0);
-  if (adc < 940) return (293);
-  if (adc < 967) return (315);
-  if (adc < 990) return (270);
-  return (-1); // error, disconnected?
+  if (adc < 380) return (113);//NOT WORKING
+  else if (adc < 393) return (68);//NOT WORKING
+  else if (adc < 414) return (90);//NOT WORKING
+  else if (adc < 456) return (90);//(158);//E is 90 degrees CW from North = 0
+  else if (adc < 508) return (135);//SE is 135 degrees CW from North = 0
+  else if (adc < 551) return (180);//(203);//S is 180 degrees CW from North = 0
+  else if (adc < 615) return (45);//(180);//NE is 45 degrees CW from North = 0
+  else if (adc < 680) return (23);//NOT WORKING
+  else if (adc < 746) return (225);//(45);//SW is 225 degrees CW from North = 0
+  else if (adc < 801) return (248);//NOT WORKING
+  else if (adc < 833) return (0);//(225);//N is 0 degrees CW from North = 0
+  else if (adc < 878) return (338);//NOT WORKING
+  else if (adc < 913) return (325);//(0);//NW is 325 degrees CW from North = 0
+  else if (adc < 940) return (293);//NOT WORKING
+  else if (adc < 967) return (270);//(315);//W is 270 degrees CW from North = 0
+  else if (adc < 990) return (270);//NOT WORKING
+  else return (-1); // error, disconnected?
 }
 
 
