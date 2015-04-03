@@ -59,7 +59,7 @@ byte seconds; //When it hits 60, increase the current minute
 byte seconds_2m; //Keeps track of the "wind speed/dir avg" over last 2 minutes array of data
 byte minutes; //Keeps track of where we are in various arrays of data
 byte minutes_10m; //Keeps track of where we are in wind gust/dir over last 10 minutes array of data
-byte minutes_5m; // Niroshan this is for 5 mnts rain 
+//byte minutes_5m; // Niroshan this is for 5 mnts rain 
 
 long lastWindCheck = 0;
 volatile long lastWindIRQ = 0;
@@ -76,7 +76,7 @@ volatile byte windClicks = 0;
 byte windspdavg[120]; //120 bytes to keep track of 2 minute average
 int winddiravg[120]; //120 ints to keep track of 2 minute average
 //float windgust_10m[10]; //10 floats to keep track of 10 minute max //Yann: to check if OK
-volatile float rain5m[5]; //Niroshan 5 float to keep rain data of 5 mnts  //Yann: added volatile
+//volatile float rain5m[5]; //Niroshan 5 float to keep rain data of 5 mnts  //Yann: added volatile
 //int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
 volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes of rain
 
@@ -126,7 +126,7 @@ void rainIRQ()
   {
     dailyrainin += 0.011*25.4; //Each dump is 0.011" of water
     rainHour[minutes] += 0.011*25.4; //Increase this minute's amount of rain
-    rain5m[minutes_5m] +=0.011*25.4; // increase this 5 mnts amout of rain 
+    //rain5m[minutes_5m] +=0.011*25.4; // increase this 5 mnts amout of rain 
     rainlast = raintime; // set up for next event
   }
   //Removed for dynamic memory reduction
@@ -191,7 +191,7 @@ void setup()
 
   smartdelay(60000); //Wait 60 seconds, and gather GPS data
   minutes = gps.time.minute();
-  minutes_5m = gps.time.minute();
+  //minutes_5m = gps.time.minute();
   minutes_10m = gps.time.minute();
   seconds = gps.time.second();
   lastSecond = millis();
@@ -254,11 +254,11 @@ void loop()
 
       if(++minutes % 60 == 0) minutes = 0;
       //if(++minutes_5m % 5 == 0) Rainindi = 0;
-      if(minutes_5m % 5 == 0) minutes_5m = 0;
+      //if(minutes_5m % 5 == 0) minutes_5m = 0;
       if(++minutes_10m % 10 == 0) minutes_10m = 0;
 
       rainHour[minutes] = 0; //Zero out this minute's rainfall amount
-      rain5m[minutes_5m] = 0; //Zero out this 5 minutes' rain Niroshan
+      //rain5m[minutes_5m] = 0; //Zero out this 5 minutes' rain Niroshan
 //      windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
     }
 
@@ -357,7 +357,8 @@ int get_wind_direction()
 //I don't like the way this function is written but Arduino doesn't support floats under sprintf
 void printWeather()
 {
-      digitalWrite(STAT2, HIGH); //Turn off stat LED
+      //Turn on orange led during data gathering
+      digitalWrite(STAT2, HIGH); //Turn on stat LED
 
   //calcWeather(); //Go calc all the various sensors
 //Calculates each of the variables that wunderground is expecting
@@ -422,9 +423,9 @@ void printWeather()
   for(int i = 0 ; i < 60 ; i++) //change to 60 mnts 
     rainin += rainHour[i];
 
-  float rainin_5m = 0;  
-  for(int i = 0 ; i < 5 ; i++) //change to 5 mnts 
-    rainin_5m += rain5m[i];
+  //float rainin_5m = 0;  
+  //for(int i = 0 ; i < 5 ; i++) //change to 5 mnts 
+  //  rainin_5m += rain5m[i];
 
 
   //Calc pressure
@@ -437,7 +438,7 @@ void printWeather()
 
   //Calc battery level
   float batt_lvl = get_battery_level();
-
+  digitalWrite(STAT2, LOW); //Turn off stat LED
 //} //END OF GO CALC WEATHER FUNCTION
 
 
@@ -485,7 +486,6 @@ void printWeather()
   lcd.setCursor(0, 2);
   lcd.print(sz);
   delay(2000);
-  digitalWrite(STAT2, LOW); //Turn off stat LED
   
   //Serial.print(",winddir=");
   Serial.print(",");
@@ -565,7 +565,7 @@ void printWeather()
   
   //Serial.print(",rain5mmm=");
   Serial.print(",");
-  Serial.print(rainin_5m, 2);
+  //Serial.print(rainin_5m, 2);
   //Serial.print(",rainindicate=");
   Serial.print(",");
   //Serial.print(Rainindi, 1);
