@@ -450,13 +450,10 @@ float get_wind_speed()
 int get_wind_direction() 
 {
   unsigned int adc;
-
   adc = analogRead(WDIR); // get the current reading from the sensor
-
   // The following table is ADC readings for the wind direction sensor output, sorted from low to high.
   // Each threshold is the midpoint between adjacent headings. The output is degrees for that ADC reading.
   // Note that these are not in compass degree order! See Weather Meters datasheet for more information.
-
   if (adc < 380) return (113);
   if (adc < 393) return (68);
   if (adc < 414) return (90);

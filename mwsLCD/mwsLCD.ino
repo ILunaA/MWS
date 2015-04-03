@@ -335,10 +335,10 @@ void printWeather()
 //void calcWeather()
 //{ //RE INTEGRATED TO SAVE GLOBAL VARIABLE ALLOCATION FOR UNO
   //Calc winddir
-  int winddir = get_wind_direction();
+  //int winddir = get_wind_direction();
 
   //Calc windspeed
-  float windspeedms = get_wind_speed();
+  //float windspeedms = get_wind_speed();
 
   //Calc windspdms_avg2m
   float temp = 0;
@@ -355,13 +355,13 @@ void printWeather()
   int winddir_avg2m = temp;
 
   //Calc humidity
-  float humidity = myHumidity.readHumidity();
+  //float humidity = myHumidity.readHumidity();
   //float temp_h = myHumidity.readTemperature();
   //Serial.print(" TempH:");
   //Serial.print(temp_h, 2);
 
   //Calc tempc from pressure sensor
-  float tempc = myPressure.readTemp();
+  //float tempc = myPressure.readTemp();
   //Serial.print(" TempP:");
   //Serial.print(tempc, 2);
 
@@ -378,15 +378,15 @@ void printWeather()
 
 
   //Calc pressure
-  float pressure = myPressure.readPressure();
+  //float pressure = myPressure.readPressure();
 
   //Calc dewptf
 
   //Calc light level
-  float light_lvl = get_light_level();
+  //float light_lvl = get_light_level();
 
   //Calc battery level
-  float batt_lvl = get_battery_level();
+  //float batt_lvl = get_battery_level();
   digitalWrite(STAT2, LOW); //Turn off stat LED
 //} //END OF GO CALC WEATHER FUNCTION
 
@@ -402,59 +402,23 @@ void printWeather()
   Serial.print(",");
   Serial.print(gps.satellites.value());
 
-  //lcd.clear();
-  //lcd.print("Longitude (dd.d)");
-  //lcd.setCursor(0, 2);
-  //lcd.print(gps.location.lng(), 6);
-  //delay(2000);
-  
-  //lcd.clear();
-  //lcd.print("Latitude (dd.d)");
-  //lcd.setCursor(0, 2);
-  //lcd.print(gps.location.lat(), 6);
-  //delay(2000);
-
   char sz[32];
   Serial.print(",");
   sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
   Serial.print(sz);
-
-  lcd.clear();
-  lcd.print("GMT Date");
-  lcd.setCursor(0, 2);
-  lcd.print(sz);
-  delay(2000);
 
   //Serial.print(",time=");
   Serial.print(",");
   sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
   Serial.print(sz);
   
-  lcd.clear();
-  lcd.print("GMT Time");
-  lcd.setCursor(0, 2);
-  lcd.print(sz);
-  delay(2000);
-  
   //Serial.print(",winddir=");
   Serial.print(",");
-  Serial.print(winddir);
+  Serial.print(get_wind_direction());
   //Serial.print(",windspeedms=");
   Serial.print(",");
-  Serial.print(windspeedms, 1);
+  Serial.print(get_wind_speed(), 1);
 
-  lcd.clear();
-  lcd.print("Wind Direction");
-  lcd.setCursor(0, 2);
-  lcd.print(winddir);
-  delay(2000);
-  
-  lcd.clear();
-  lcd.print("Wind Speed (m/s)");
-  lcd.setCursor(0, 2);
-  lcd.print(windspeedms);
-  delay(2000);
-  
   //Serial.print(",windgustms=");
   Serial.print(",");
 //  Serial.print(windgustms, 1);
@@ -475,22 +439,10 @@ void printWeather()
 //  Serial.print(windgustdir_10m);
   //Serial.print(",humidity=");
   Serial.print(",");
-  Serial.print(humidity, 1);
+  Serial.print(myHumidity.readHumidity(), 1);
   //Serial.print(",tempc=");
   Serial.print(",");
-  Serial.print(tempc, 1);
-  
-  lcd.clear();
-  lcd.print("Humidity (%)");
-  lcd.setCursor(0, 2);
-  lcd.print(humidity);
-  delay(2000);
-  
-  lcd.clear();
-  lcd.print("Temperature (C)");
-  lcd.setCursor(0, 2);
-  lcd.print(tempc);
-  delay(2000);
+  Serial.print(myPressure.readTemp(), 1);
   
   //Serial.print(",raindailymm=");
   Serial.print(",");
@@ -498,6 +450,77 @@ void printWeather()
   //Serial.print(",rainhourmm=");
   Serial.print(",");
   Serial.print(rainin, 2);
+  
+  //Serial.print(",rain5mmm=");
+  Serial.print(",");
+  //Serial.print(rainin_5m, 2);
+  //Serial.print(",rainindicate=");
+  Serial.print(",");
+  //Serial.print(Rainindi, 1);
+  
+  //Serial.print(",pressure=");
+  Serial.print(",");
+  Serial.print(myPressure.readPressure(), 2);
+
+  //Serial.print(",batt_lvl=");
+  Serial.print(",");
+  Serial.print(get_battery_level(), 2);
+
+  //Serial.print(",light_lvl=");
+  Serial.print(",");
+  Serial.print(get_light_level(), 2);
+
+  //--------------------------
+  //PRINT TO LCD
+  //--------------------------
+
+  //lcd.clear();
+  //lcd.print("Longitude (dd.d)");
+  //lcd.setCursor(0, 2);
+  //lcd.print(gps.location.lng(), 6);
+  //delay(2000);
+  
+  //lcd.clear();
+  //lcd.print("Latitude (dd.d)");
+  //lcd.setCursor(0, 2);
+  //lcd.print(gps.location.lat(), 6);
+  //delay(2000);
+  
+  lcd.clear();
+  lcd.print("GMT Date");
+  lcd.setCursor(0, 2);
+  lcd.print(sz);
+  delay(2000);
+  
+  lcd.clear();
+  lcd.print("GMT Time");
+  lcd.setCursor(0, 2);
+  lcd.print(sz);
+  delay(2000);
+  
+  lcd.clear();
+  lcd.print("Wind Direction");
+  lcd.setCursor(0, 2);
+  lcd.print(get_wind_direction());
+  delay(2000);
+  
+  lcd.clear();
+  lcd.print("Wind Speed (m/s)");
+  lcd.setCursor(0, 2);
+  lcd.print(get_wind_speed(), 1);
+  delay(2000);
+  
+  lcd.clear();
+  lcd.print("Humidity (%)");
+  lcd.setCursor(0, 2);
+  lcd.print(myHumidity.readHumidity());
+  delay(2000);
+  
+  lcd.clear();
+  lcd.print("Temperature (C)");
+  lcd.setCursor(0, 2);
+  lcd.print(myPressure.readTemp());
+  delay(2000);
   
   //Not enough dynamic memory in UNO
   //lcd.clear();
@@ -512,13 +535,6 @@ void printWeather()
   lcd.print(rainin);
   delay(2000);
   
-  //Serial.print(",rain5mmm=");
-  Serial.print(",");
-  //Serial.print(rainin_5m, 2);
-  //Serial.print(",rainindicate=");
-  Serial.print(",");
-  //Serial.print(Rainindi, 1);
-  
   //Not enough dynamic memory in UNO
   //lcd.clear();
   //lcd.print("Rain 5min (mm)");
@@ -526,36 +542,24 @@ void printWeather()
   //lcd.print(rainin_5m);
   //delay(2000);
   
-  //Serial.print(",pressure=");
-  Serial.print(",");
-  Serial.print(pressure, 2);
-
   lcd.clear();
   lcd.print("Pressure (hPa)");
   lcd.setCursor(0, 2);
-  lcd.print(pressure/100.0);
+  lcd.print(myPressure.readPressure()/100.0);
   delay(2000);
-
-  //Serial.print(",batt_lvl=");
-  Serial.print(",");
-  Serial.print(batt_lvl, 2);
 
   //Not enough dynamic memory in UNO
   //lcd.clear();
   //lcd.print("Battery Level");
   //lcd.setCursor(0, 2);
-  //lcd.print(batt_lvl);
+  //lcd.print(get_battery_level());
   //delay(2000);
-
-  //Serial.print(",light_lvl=");
-  Serial.print(",");
-  Serial.print(light_lvl, 2);
 
   //Not enough dynamic memory in UNO
   //lcd.clear();
   //lcd.print("Sunlight");
   //lcd.setCursor(0, 2);
-  //lcd.print(light_lvl);
+  //lcd.print(get_light_level());
   //delay(2000);
 
 }
