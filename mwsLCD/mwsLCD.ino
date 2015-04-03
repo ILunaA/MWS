@@ -117,12 +117,12 @@ void rainIRQ()
 {
   unsigned long raintime = millis(); // grab current time
   unsigned long raininterval = raintime - rainlast; // calculate interval between this and last event
-
-  if (raininterval > 10) // ignore switch-bounce glitches less than 10mS after initial edge
+  
+  if (raininterval > 100) // ignore switch-bounce glitches less than 10x10mS after initial edge
   {
     dailyrainin += 0.011*25.4; //Each dump is 0.011" of water
-    rainHour[minutes] += 0.011*25.4; //Increase this minute's amount of rain
-    //rain5m[minutes_5m] +=0.011*25.4; // increase this 5 mnts amout of rain 
+    rainHour[minutes] += 0.011*25.4; //Add this minute's amount of rain
+    //rain5m[minutes_5m] +=0.011*25.4; // Add this minute's amout of rain 
     rainlast = raintime; // set up for next event
   }
   //Removed for dynamic memory reduction
@@ -143,7 +143,6 @@ void wspeedIRQ()
     lastWindIRQ = millis(); //Grab the current time
     windClicks++; //There is 1.492MPH for each click per second.
   }
-
 }
 
 
@@ -352,12 +351,12 @@ void printWeather()
   //Calc humidity
   //float humidity = myHumidity.readHumidity();
   //float temp_h = myHumidity.readTemperature();
-  //Serial.print(" TempH:");
+  //Serial.print(F(" TempH:"));
   //Serial.print(temp_h, 2);
 
   //Calc tempc from pressure sensor
   //float tempc = myPressure.readTemp();
-  //Serial.print(" TempP:");
+  //Serial.print(F(" TempP:"));
   //Serial.print(tempc, 2);
 
   //Total rainfall for the day is calculated within the interrupt
