@@ -115,15 +115,12 @@ void rainIRQ()
 // Count rain gauge bucket tips as they occur
 // Activated by the magnet and reed switch in the rain gauge, attached to input D2
 {
-  unsigned long raintime = millis(); // grab current time
-  unsigned long raininterval = raintime - rainlast; // calculate interval between this and last event
-  
-  if (raininterval > 100) // ignore switch-bounce glitches less than 10x10mS after initial edge
+  if (millis() - rainlast > 200) // ignore switch-bounce glitches less than 20x10mS after initial edge
   {
+    rainlast = millis(); // set up for next event
     dailyrainin += 0.011*25.4; //Each dump is 0.011" of water
     rainHour[minutes] += 0.011*25.4; //Add this minute's amount of rain
     //rain5m[minutes_5m] +=0.011*25.4; // Add this minute's amout of rain 
-    rainlast = raintime; // set up for next event
   }
   //Removed for dynamic memory reduction
   //Nirosha  
