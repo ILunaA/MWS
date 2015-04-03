@@ -109,7 +109,7 @@ volatile float dailyrainin = 0; // [rain inches so far today in local time]
 //byte month, day, hour, minute, second, hundredths;
 
 // volatiles are subject to modification by IRQs
-volatile unsigned long raintime, rainlast, raininterval, rain;
+volatile unsigned long rainlast;
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -119,8 +119,8 @@ void rainIRQ()
 // Count rain gauge bucket tips as they occur
 // Activated by the magnet and reed switch in the rain gauge, attached to input D2
 {
-  raintime = millis(); // grab current time
-  raininterval = raintime - rainlast; // calculate interval between this and last event
+  unsigned long raintime = millis(); // grab current time
+  unsigned long raininterval = raintime - rainlast; // calculate interval between this and last event
 
   if (raininterval > 10) // ignore switch-bounce glitches less than 10mS after initial edge
   {
@@ -155,12 +155,7 @@ void setup()
 {
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
-  // Print a message to the LCD.
-  lcd.clear();
-  lcd.print("Mobile Weather");
-  lcd.setCursor(0, 2);
-  lcd.print("Station is up");
-  
+
   Serial.begin(9600);
 
   ss.begin(9600); //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
@@ -485,41 +480,31 @@ void printWeather()
   //delay(2000);
   
   lcd.clear();
-  lcd.print("GMT Date");
+  lcd.print(sz);
   lcd.setCursor(0, 2);
   lcd.print(sz);
-  delay(2000);
+  lcd.print(" GMT");
+  delay(4000);
   
   lcd.clear();
-  lcd.print("GMT Time");
-  lcd.setCursor(0, 2);
-  lcd.print(sz);
-  delay(2000);
-  
-  lcd.clear();
-  lcd.print("Wind Direction");
-  lcd.setCursor(0, 2);
+  lcd.print("WD: ");
   lcd.print(get_wind_direction());
-  lcd.print("(N=0 CW)");
-  delay(2000);
-  
-  lcd.clear();
-  lcd.print("Wind Speed (m/s)");
+  lcd.print("  N=0 CW");
   lcd.setCursor(0, 2);
+  lcd.print("WS:");
   lcd.print(get_wind_speed(), 1);
-  delay(2000);
+  lcd.print(" m/s");
+  delay(4000);
   
   lcd.clear();
-  lcd.print("Humidity (%)");
-  lcd.setCursor(0, 2);
+  lcd.print("H:");
   lcd.print(myHumidity.readHumidity());
-  delay(2000);
-  
-  lcd.clear();
-  lcd.print("Temperature (C)");
+  lcd.print(" %");
   lcd.setCursor(0, 2);
+  lcd.print("T:");
   lcd.print(myPressure.readTemp());
-  delay(2000);
+  lcd.print(" C");
+  delay(4000);
   
   //Not enough dynamic memory in UNO
   //lcd.clear();
@@ -529,10 +514,14 @@ void printWeather()
   //delay(2000);
   
   lcd.clear();
-  lcd.print("Rain Hourly (mm)");
-  lcd.setCursor(0, 2);
+  lcd.print("R:");
   lcd.print(rainin);
-  delay(2000);
+  lcd.print(" mm/h");
+  lcd.setCursor(0, 2);
+  lcd.print("P:");
+  lcd.print(myPressure.readPressure()/100.0);
+  lcd.print(" hPa");
+  delay(4000);
   
   //Not enough dynamic memory in UNO
   //lcd.clear();
@@ -541,11 +530,6 @@ void printWeather()
   //lcd.print(rainin_5m);
   //delay(2000);
   
-  lcd.clear();
-  lcd.print("Pressure (hPa)");
-  lcd.setCursor(0, 2);
-  lcd.print(myPressure.readPressure()/100.0);
-  delay(2000);
 
   //Not enough dynamic memory in UNO
   //lcd.clear();
