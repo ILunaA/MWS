@@ -566,15 +566,14 @@ void printWeather()
   lcd.clear();
   lcd.print("Rain Daily (mm)");
   lcd.setCursor(0, 2);
-  lcd.print(raindailymm);
+  lcd.print(dailyrainin);
   delay(2000);
   
   lcd.clear();
   lcd.print("Rain Hourly (mm)");
   lcd.setCursor(0, 2);
-  lcd.print(rainhourmm);
+  lcd.print(rainin);
   delay(2000);
-  
   
   //Serial.print(",rain5mmm=");
   Serial.print(",");
@@ -582,15 +581,42 @@ void printWeather()
   //Serial.print(",rainindicate=");
   Serial.print(",");
   Serial.print(Rainindi, 1);
+  
+  lcd.clear();
+  lcd.print("Rain 5min (mm)");
+  lcd.setCursor(0, 2);
+  lcd.print(rainin_5m);
+  delay(2000);
+  
   //Serial.print(",pressure=");
   Serial.print(",");
   Serial.print(pressure, 2);
+
+  lcd.clear();
+  lcd.print("Pressure (hPa)");
+  lcd.setCursor(0, 2);
+  lcd.print(pressure);
+  delay(2000);
+
   //Serial.print(",batt_lvl=");
   Serial.print(",");
   Serial.print(batt_lvl, 2);
+
+  lcd.clear();
+  lcd.print("Battery Level");
+  lcd.setCursor(0, 2);
+  lcd.print(batt_lvl);
+  delay(2000);
+
   //Serial.print(",light_lvl=");
   Serial.print(",");
   Serial.print(light_lvl, 2);
+
+  lcd.clear();
+  lcd.print("Sunlight");
+  lcd.setCursor(0, 2);
+  lcd.print(light_lvl);
+  delay(2000);
 
 }
 
