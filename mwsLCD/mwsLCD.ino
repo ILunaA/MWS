@@ -210,11 +210,8 @@ void loop()
   if(millis() - lastSecond >= 1000)
   {
     digitalWrite(STAT1, HIGH); //Blink stat LED
-
-    lastSecond += 1000;
-
     //Take a speed and direction reading every second for 2 minute average
-    seconds_2m += 10; 
+    seconds_2m += millis() - lastSecond; 
     if(seconds_2m > 119) seconds_2m = 0;
 
     //Calc the wind speed and direction every second for 120 second to get 2 minute average
@@ -223,7 +220,8 @@ void loop()
     windspdavg[seconds_2m] = (int)currentSpeed;
     winddiravg[seconds_2m] = currentDirection;
 
-    seconds += 10; 
+    seconds += millis() - lastSecond; 
+    lastSecond = millis();
     //Minutes loop
     if(seconds > 59)
     {
