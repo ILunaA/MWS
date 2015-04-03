@@ -552,7 +552,7 @@ void printWeather()
   delay(2000);
   
   lcd.clear();
-  lcd.print("Temperature (Celsius)");
+  lcd.print("Temperature (C)");
   lcd.setCursor(0, 2);
   lcd.print(tempc);
   delay(2000);
