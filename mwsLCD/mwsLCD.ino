@@ -139,8 +139,8 @@ volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes o
 //int windgustdir_10m = 0; // [0-360 past 10 minutes wind gust direction]
 //float humidity = 0; // [%]
 //float tempc = 0; // [temperature C]
-float rainin = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
-float rainin_5m = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
+//float rainin = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
+//float rainin_5m = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
 volatile float dailyrainin = 0; // [rain inches so far today in local time]
 //float baromin = 30.03;// [barom in] - It's hard to calculate baromin locally, do this in the agent
 //float pressure;
@@ -479,11 +479,11 @@ void printWeather()
   //Total rainfall for the day is calculated within the interrupt
   //Calculate amount of rainfall for the last 60 minutes
   //Niroshan Stop the gathering hourly rain fall data
-  rainin = 0;  
+  float rainin = 0;  
   for(int i = 0 ; i < 60 ; i++) //change to 60 mnts 
     rainin += rainHour[i];
 
-  rainin_5m = 0;  
+  float rainin_5m = 0;  
   for(int i = 0 ; i < 5 ; i++) //change to 5 mnts 
     rainin_5m += rain5m[i];
 
