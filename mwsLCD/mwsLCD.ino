@@ -181,22 +181,22 @@ void setup()
   myPressure.setOversampleRate(7); // Set Oversample to the recommended 128
   myPressure.enableEventFlags(); // Enable all three pressure and temp event flags 
 
-    //Configure the humidity sensor
+  //Configure the humidity sensor
   myHumidity.begin();
-
-  smartdelay(60000); //Wait 60 seconds, and gather GPS data
-  minutes = gps.time.minute();
-  //minutes_5m = gps.time.minute();
-  minutes_10m = gps.time.minute();
-  seconds = gps.time.second();
-  lastSecond = millis();
+  
   // attach external interrupt pins to IRQ functions
   attachInterrupt(0, rainIRQ, FALLING);
   attachInterrupt(1, wspeedIRQ, FALLING);
 
   // turn on interrupts
   interrupts();
-
+  
+  smartdelay(60000); //Wait 60 seconds, and gather GPS data
+  minutes = gps.time.minute();
+  //minutes_5m = gps.time.minute();
+  minutes_10m = gps.time.minute();
+  seconds = gps.time.second();
+  lastSecond = millis();
 }
 
 void loop()
@@ -486,17 +486,17 @@ void printWeather()
   sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
   lcd.print(sz);
   lcd.print(" GMT");
-  delay(4000);
+  delay(5000);
   
   lcd.clear();
   lcd.print("WD: ");
   lcd.print(get_wind_direction());
-  lcd.print("  N=0 CW");
+  lcd.print(" N=0 CW");
   lcd.setCursor(0, 2);
   lcd.print("WS:");
   lcd.print(get_wind_speed(), 1);
   lcd.print(" m/s");
-  delay(4000);
+  delay(5000);
   
   lcd.clear();
   lcd.print("H:");
@@ -506,7 +506,7 @@ void printWeather()
   lcd.print("T:");
   lcd.print(myPressure.readTemp());
   lcd.print(" C");
-  delay(4000);
+  delay(5000);
   
   //Not enough dynamic memory in UNO
   //lcd.clear();
@@ -523,7 +523,7 @@ void printWeather()
   lcd.print("P:");
   lcd.print(myPressure.readPressure()/100.0);
   lcd.print(" hPa");
-  delay(4000);
+  delay(5000);
   
   //Not enough dynamic memory in UNO
   //lcd.clear();
