@@ -500,6 +500,7 @@ void printWeather()
   lcd.print("Wind Direction");
   lcd.setCursor(0, 2);
   lcd.print(get_wind_direction());
+  lcd.print("(N=0 CW)");
   delay(2000);
   
   lcd.clear();
