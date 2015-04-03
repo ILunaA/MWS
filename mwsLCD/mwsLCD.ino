@@ -515,15 +515,15 @@ void printWeather()
   Serial.print(gps.satellites.value());
 
   lcd.clear();
-//  lcd.setCursor(0, 1);
-  lcd.println("lon=");
+  lcd.print("Longitude");
+  lcd.setCursor(0, 2);
   lcd.print(gps.location.lng(), 6);
-  delay(1500);
-//  lcd.setCursor(0, 2);
+  delay(2000);
   lcd.clear();
-  lcd.println("lat=");
+  lcd.print("Latitude");
+  lcd.setCursor(0, 2);
   lcd.print(gps.location.lat(), 6);
-  delay(1500);
+  delay(2000);
 
   char sz[32];
   Serial.print(",");
@@ -531,10 +531,10 @@ void printWeather()
   Serial.print(sz);
 
   lcd.clear();
-  //lcd.setCursor(0, 1);
-  lcd.println(",date=");
+  lcd.print("GMT Date");
+  lcd.setCursor(0, 2);
   lcd.print(sz);
-  delay(1500);
+  delay(2000);
 
   //Serial.print(",time=");
   Serial.print(",");
@@ -542,10 +542,10 @@ void printWeather()
   Serial.print(sz);
   
   lcd.clear();
-  //lcd.setCursor(0, 2);
-  lcd.println(",time=");
+  lcd.print("GMT Time");
+  lcd.setCursor(0, 2);
   lcd.print(sz);
-  delay(1500);
+  delay(2000);
   
   //Serial.print(",winddir=");
   Serial.print(",");
@@ -553,6 +553,16 @@ void printWeather()
   //Serial.print(",windspeedms=");
   Serial.print(",");
   Serial.print(windspeedms, 1);
+
+  lcd.clear();
+  lcd.print("Wind Direction");
+  lcd.setCursor(0, 2);
+  lcd.print(sz);
+  delay(2000);
+  
+
+
+
   //Serial.print(",windgustms=");
   Serial.print(",");
   Serial.print(windgustms, 1);
