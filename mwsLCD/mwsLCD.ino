@@ -123,27 +123,27 @@ volatile byte windClicks = 0;
 
 byte windspdavg[120]; //120 bytes to keep track of 2 minute average
 int winddiravg[120]; //120 ints to keep track of 2 minute average
-float windgust_10m[10]; //10 floats to keep track of 10 minute max //Yann: to check if OK
+//float windgust_10m[10]; //10 floats to keep track of 10 minute max //Yann: to check if OK
 volatile float rain5m[5]; //Niroshan 5 float to keep rain data of 5 mnts  //Yann: added volatile
-int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
+//int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
 volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes of rain
 
 //These are all the weather values that wunderground expects:
-int winddir = 0; // [0-360 instantaneous wind direction]
-float windspeedms = 0; // [mph instantaneous wind speed]
-float windgustms = 0; // [mph current wind gust, using software specific time period]
-int windgustdir = 0; // [0-360 using software specific time period]
-float windspdms_avg2m = 0; // [mph 2 minute average wind speed mph]
-int winddir_avg2m = 0; // [0-360 2 minute average wind direction]
-float windgustms_10m = 0; // [mph past 10 minutes wind gust mph ]
-int windgustdir_10m = 0; // [0-360 past 10 minutes wind gust direction]
-float humidity = 0; // [%]
-float tempf = 0; // [temperature F]
+//int winddir = 0; // [0-360 instantaneous wind direction]
+//float windspeedms = 0; // [mph instantaneous wind speed]
+//float windgustms = 0; // [mph current wind gust, using software specific time period]
+//int windgustdir = 0; // [0-360 using software specific time period]
+//float windspdms_avg2m = 0; // [mph 2 minute average wind speed mph]
+//int winddir_avg2m = 0; // [0-360 2 minute average wind direction]
+//float windgustms_10m = 0; // [mph past 10 minutes wind gust mph ]
+//int windgustdir_10m = 0; // [0-360 past 10 minutes wind gust direction]
+//float humidity = 0; // [%]
+//float tempc = 0; // [temperature C]
 float rainin = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
 float rainin_5m = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
 volatile float dailyrainin = 0; // [rain inches so far today in local time]
 //float baromin = 30.03;// [barom in] - It's hard to calculate baromin locally, do this in the agent
-float pressure = 0;
+//float pressure;
 //float dewptf; // [dewpoint F] - It's hard to calculate dewpoint locally, do this in the agent
 
 float batt_lvl = 11.8; //[analog value from 0 to 1023]
@@ -281,18 +281,18 @@ void loop()
     //if(seconds_2m % 10 == 0) displayArrays(); //For testing
 
     //Check to see if this is a gust for the minute
-    if(currentSpeed > windgust_10m[minutes_10m])
-    {
-      windgust_10m[minutes_10m] = currentSpeed;
-      windgustdirection_10m[minutes_10m] = currentDirection;
-    }
+//    if(currentSpeed > windgust_10m[minutes_10m])
+//    {
+//      windgust_10m[minutes_10m] = currentSpeed;
+//      windgustdirection_10m[minutes_10m] = currentDirection;
+//    }
 
     //Check to see if this is a gust for the day
-    if(currentSpeed > windgustms)
-    {
-      windgustms = currentSpeed;
-      windgustdir = currentDirection;
-    }
+//    if(currentSpeed > windgustms)
+//    {
+//      windgustms = currentSpeed;
+//      windgustdir = currentDirection;
+//    }
     //Minute loop
     seconds += 10; 
     if(seconds > 59)
@@ -306,7 +306,7 @@ void loop()
 
       rainHour[minutes] = 0; //Zero out this minute's rainfall amount
       rain5m[minutes_5m] = 0; //Zero out this 5 minutes' rain Niroshan
-      windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
+//      windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
     }
 
     //Report all readings every second
@@ -328,87 +328,6 @@ static void smartdelay(unsigned long ms)
       gps.encode(ss.read());
   } 
   while (millis() - start < ms);
-}
-
-
-//Calculates each of the variables that wunderground is expecting
-void calcWeather()
-{
-  //Calc winddir
-  winddir = get_wind_direction();
-
-  //Calc windspeed
-  windspeedms = get_wind_speed();
-
-  //Calc windgustms
-  //Calc windgustdir
-  //Report the largest windgust today
-  windgustms = 0;
-  windgustdir = 0;
-
-  //Calc windspdms_avg2m
-  float temp = 0;
-  for(int i = 0 ; i < 120 ; i++)
-    temp += windspdavg[i];
-  temp /= 120.0;
-  windspdms_avg2m = temp;
-
-  //Calc winddir_avg2m
-  temp = 0; //Can't use winddir_avg2m because it's an int
-  for(int i = 0 ; i < 120 ; i++)
-    temp += winddiravg[i];
-  temp /= 120;
-  winddir_avg2m = temp;
-
-  //Calc windgustms_10m
-  //Calc windgustdir_10m
-  //Find the largest windgust in the last 10 minutes
-  windgustms_10m = 0;
-  windgustdir_10m = 0;
-  //Step through the 10 minutes  
-  for(int i = 0; i < 10 ; i++)
-  {
-    if(windgust_10m[i] > windgustms_10m)
-    {
-      windgustms_10m = windgust_10m[i];
-      windgustdir_10m = windgustdirection_10m[i];
-    }
-  }
-
-  //Calc humidity
-  humidity = myHumidity.readHumidity();
-  //float temp_h = myHumidity.readTemperature();
-  //Serial.print(" TempH:");
-  //Serial.print(temp_h, 2);
-
-  //Calc tempf from pressure sensor
-  tempf = myPressure.readTemp();
-  //Serial.print(" TempP:");
-  //Serial.print(tempf, 2);
-
-  //Total rainfall for the day is calculated within the interrupt
-  //Calculate amount of rainfall for the last 60 minutes
-  //Niroshan Stop the gathering hourly rain fall data
-  rainin = 0;  
-  for(int i = 0 ; i < 60 ; i++) //change to 60 mnts 
-    rainin += rainHour[i];
-
-  rainin_5m = 0;  
-  for(int i = 0 ; i < 5 ; i++) //change to 5 mnts 
-    rainin_5m += rain5m[i];
-
-
-  //Calc pressure
-  pressure = myPressure.readPressure();
-
-  //Calc dewptf
-
-  //Calc light level
-  light_lvl = get_light_level();
-
-  //Calc battery level
-  batt_lvl = get_battery_level();
-
 }
 
 //Returns the voltage of the light sensor based on the 3.3V rail
@@ -501,7 +420,88 @@ int get_wind_direction()
 //I don't like the way this function is written but Arduino doesn't support floats under sprintf
 void printWeather()
 {
-  calcWeather(); //Go calc all the various sensors
+  //calcWeather(); //Go calc all the various sensors
+//Calculates each of the variables that wunderground is expecting
+//void calcWeather()
+//{ //RE INTEGRATED TO SAVE GLOBAL VARIABLE ALLOCATION FOR UNO
+  //Calc winddir
+  int winddir = get_wind_direction();
+
+  //Calc windspeed
+  float windspeedms = get_wind_speed();
+
+  //Calc windgustms
+  //Calc windgustdir
+  //Report the largest windgust today
+//  windgustms = 0;
+//  windgustdir = 0;
+
+  //Calc windspdms_avg2m
+  float temp = 0;
+  for(int i = 0 ; i < 120 ; i++)
+    temp += windspdavg[i];
+  temp /= 120.0;
+  float windspdms_avg2m = temp;
+
+  //Calc winddir_avg2m
+  temp = 0; //Can't use winddir_avg2m because it's an int
+  for(int i = 0 ; i < 120 ; i++)
+    temp += winddiravg[i];
+  temp /= 120;
+  int winddir_avg2m = temp;
+
+  //Calc windgustms_10m
+  //Calc windgustdir_10m
+  //Find the largest windgust in the last 10 minutes
+//  windgustms_10m = 0;
+//  windgustdir_10m = 0;
+  //Step through the 10 minutes  
+//  for(int i = 0; i < 10 ; i++)
+//  {
+//    if(windgust_10m[i] > windgustms_10m)
+//    {
+//      windgustms_10m = windgust_10m[i];
+//      windgustdir_10m = windgustdirection_10m[i];
+//    }
+//  }
+
+  //Calc humidity
+  float humidity = myHumidity.readHumidity();
+  //float temp_h = myHumidity.readTemperature();
+  //Serial.print(" TempH:");
+  //Serial.print(temp_h, 2);
+
+  //Calc tempc from pressure sensor
+  float tempc = myPressure.readTemp();
+  //Serial.print(" TempP:");
+  //Serial.print(tempc, 2);
+
+  //Total rainfall for the day is calculated within the interrupt
+  //Calculate amount of rainfall for the last 60 minutes
+  //Niroshan Stop the gathering hourly rain fall data
+  rainin = 0;  
+  for(int i = 0 ; i < 60 ; i++) //change to 60 mnts 
+    rainin += rainHour[i];
+
+  rainin_5m = 0;  
+  for(int i = 0 ; i < 5 ; i++) //change to 5 mnts 
+    rainin_5m += rain5m[i];
+
+
+  //Calc pressure
+  float pressure = myPressure.readPressure();
+
+  //Calc dewptf
+
+  //Calc light level
+  light_lvl = get_light_level();
+
+  //Calc battery level
+  batt_lvl = get_battery_level();
+
+//} //END OF GO CALC WEATHER FUNCTION
+
+
 
   Serial.println();
   Serial.print(gps.location.lng(), 6);
@@ -568,10 +568,10 @@ void printWeather()
   
   //Serial.print(",windgustms=");
   Serial.print(",");
-  Serial.print(windgustms, 1);
+//  Serial.print(windgustms, 1);
   //Serial.print(",windgustdir=");
   Serial.print(",");
-  Serial.print(windgustdir);
+//  Serial.print(windgustdir);
   //Serial.print(",windspdms_avg2m=");
   Serial.print(",");
   Serial.print(windspdms_avg2m, 1);
@@ -580,16 +580,16 @@ void printWeather()
   Serial.print(winddir_avg2m);
   //Serial.print(",windgustms_10m=");
   Serial.print(",");
-  Serial.print(windgustms_10m, 1);
+//  Serial.print(windgustms_10m, 1);
   //Serial.print(",windgustdir_10m=");
   Serial.print(",");
-  Serial.print(windgustdir_10m);
+//  Serial.print(windgustdir_10m);
   //Serial.print(",humidity=");
   Serial.print(",");
   Serial.print(humidity, 1);
   //Serial.print(",tempc=");
   Serial.print(",");
-  Serial.print(tempf, 1);
+  Serial.print(tempc, 1);
   
   
   lcd.clear();
@@ -601,7 +601,7 @@ void printWeather()
   lcd.clear();
   lcd.print("Temperature (Celsius)");
   lcd.setCursor(0, 2);
-  lcd.print(tempf);
+  lcd.print(tempc);
   delay(2000);
   
   //Serial.print(",raindailymm=");
