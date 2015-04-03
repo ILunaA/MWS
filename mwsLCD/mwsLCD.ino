@@ -452,16 +452,17 @@ void printWeather()
   Serial.print(",");
   Serial.print(gps.satellites.value());
 
-  lcd.clear();
-  lcd.print("Longitude (dd.d)");
-  lcd.setCursor(0, 2);
-  lcd.print(gps.location.lng(), 6);
-  delay(2000);
-  lcd.clear();
-  lcd.print("Latitude (dd.d)");
-  lcd.setCursor(0, 2);
-  lcd.print(gps.location.lat(), 6);
-  delay(2000);
+  //lcd.clear();
+  //lcd.print("Longitude (dd.d)");
+  //lcd.setCursor(0, 2);
+  //lcd.print(gps.location.lng(), 6);
+  //delay(2000);
+  
+  //lcd.clear();
+  //lcd.print("Latitude (dd.d)");
+  //lcd.setCursor(0, 2);
+  //lcd.print(gps.location.lat(), 6);
+  //delay(2000);
 
   char sz[32];
   Serial.print(",");
