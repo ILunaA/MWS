@@ -101,7 +101,7 @@ volatile float dailyrainin = 0; // [rain inches so far today in local time]
 //float batt_lvl = 11.8; //[analog value from 0 to 1023]
 //float light_lvl = 455; //[analog value from 0 to 1023]
 //Rain time stamp Niroshan // Has to be global variable !
-int Rainindi=0;
+//int Rainindi=0;
 //Variables used for GPS
 //float flat, flon; // 39.015024 -102.283608686
 //unsigned long age;
@@ -129,12 +129,13 @@ void rainIRQ()
     rain5m[minutes_5m] +=0.011*25.4; // increase this 5 mnts amout of rain 
     rainlast = raintime; // set up for next event
   }
+  //Removed for dynamic memory reduction
   //Nirosha  
   //Rain flag (1)
-  if(rain5m[minutes_5m] > 0)
-  {
-    Rainindi=1;
-  }
+  //if(rain5m[minutes_5m] > 0)
+  //{
+  //  Rainindi=1;
+  //}
   //Niroshan
 }
 
@@ -252,7 +253,7 @@ void loop()
       seconds = 0;
 
       if(++minutes % 60 == 0) minutes = 0;
-      if(++minutes_5m % 5 == 0) Rainindi = 0;
+      //if(++minutes_5m % 5 == 0) Rainindi = 0;
       if(minutes_5m % 5 == 0) minutes_5m = 0;
       if(++minutes_10m % 10 == 0) minutes_10m = 0;
 
@@ -304,15 +305,10 @@ float get_light_level()
 float get_battery_level()
 {
   float operatingVoltage = analogRead(REFERENCE_3V3);
-
   float rawVoltage = analogRead(BATT);
-
   operatingVoltage = 3.30 / operatingVoltage; //The reference voltage is 3.3V
-
   rawVoltage = operatingVoltage * rawVoltage; //Convert the 0 to 1023 int to actual voltage on BATT pin
-
   rawVoltage *= 4.90; //(3.9k+1k)/1k - multiple BATT voltage by the voltage divider to get actual system voltage
-
   return(rawVoltage);
 }
 
@@ -320,16 +316,11 @@ float get_battery_level()
 float get_wind_speed()
 {
   float deltaTime = millis() - lastWindCheck; //750ms
-
   deltaTime /= 1000.0; //Convert to seconds
-
   float windSpeed = (float)windClicks / deltaTime; //3 / 0.750s = 4
-
   windClicks = 0; //Reset and start watching for new wind
   lastWindCheck = millis();
-
   //windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
-
   return(windSpeed);
 }
 
@@ -366,6 +357,8 @@ int get_wind_direction()
 //I don't like the way this function is written but Arduino doesn't support floats under sprintf
 void printWeather()
 {
+      digitalWrite(STAT2, HIGH); //Turn off stat LED
+
   //calcWeather(); //Go calc all the various sensors
 //Calculates each of the variables that wunderground is expecting
 //void calcWeather()
@@ -448,7 +441,6 @@ void printWeather()
 //} //END OF GO CALC WEATHER FUNCTION
 
 
-
   Serial.println();
   Serial.print(gps.location.lng(), 6);
   Serial.print(",");
@@ -492,6 +484,7 @@ void printWeather()
   lcd.setCursor(0, 2);
   lcd.print(sz);
   delay(2000);
+  digitalWrite(STAT2, LOW); //Turn off stat LED
   
   //Serial.print(",winddir=");
   Serial.print(",");
@@ -574,7 +567,7 @@ void printWeather()
   Serial.print(rainin_5m, 2);
   //Serial.print(",rainindicate=");
   Serial.print(",");
-  Serial.print(Rainindi, 1);
+  //Serial.print(Rainindi, 1);
   
   //Not enough dynamic memory in UNO
   //lcd.clear();
