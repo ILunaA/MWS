@@ -515,12 +515,12 @@ void printWeather()
   Serial.print(gps.satellites.value());
 
   lcd.clear();
-  lcd.print("Longitude");
+  lcd.print("Longitude (dd.ddd)");
   lcd.setCursor(0, 2);
   lcd.print(gps.location.lng(), 6);
   delay(2000);
   lcd.clear();
-  lcd.print("Latitude");
+  lcd.print("Latitude (dd.ddd)");
   lcd.setCursor(0, 2);
   lcd.print(gps.location.lat(), 6);
   delay(2000);
@@ -555,9 +555,15 @@ void printWeather()
   Serial.print(windspeedms, 1);
 
   lcd.clear();
-  lcd.print("Wind Direction");
+  lcd.print("Wind Direction (dd.ddd)");
   lcd.setCursor(0, 2);
-  lcd.print(sz);
+  lcd.print(winddir);
+  delay(2000);
+  
+  lcd.clear();
+  lcd.print("Wind Speed (m/s)");
+  lcd.setCursor(0, 2);
+  lcd.print(windspeedms);
   delay(2000);
   
 
