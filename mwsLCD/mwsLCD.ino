@@ -195,12 +195,6 @@ void setup()
   minutes_10m = gps.time.minute();
   seconds = gps.time.second();
   lastSecond = millis();
-  //Serial.println("");
-  //Serial.println(minutes);
-  //Serial.println(minutes_5m);  
-  //Serial.println(minutes_10m);
-  //Serial.println(seconds);
-  //Serial.println(lastSecond);
   // attach external interrupt pins to IRQ functions
   attachInterrupt(0, rainIRQ, FALLING);
   attachInterrupt(1, wspeedIRQ, FALLING);
@@ -208,18 +202,16 @@ void setup()
   // turn on interrupts
   interrupts();
 
-  //Serial.println("Weather Shield online!");
-
 }
 
 void loop()
 {
   //Keep track of which minute it is
-  if(millis() - lastSecond >= 10000)
+  if(millis() - lastSecond >= 1000)
   {
     digitalWrite(STAT1, HIGH); //Blink stat LED
 
-    lastSecond += 10000;
+    lastSecond += 1000;
 
     //Take a speed and direction reading every second for 2 minute average
     seconds_2m += 10; 
@@ -227,27 +219,12 @@ void loop()
 
     //Calc the wind speed and direction every second for 120 second to get 2 minute average
     float currentSpeed = get_wind_speed();
-    //float currentSpeed = random(5); //For testing
     int currentDirection = get_wind_direction();
     windspdavg[seconds_2m] = (int)currentSpeed;
     winddiravg[seconds_2m] = currentDirection;
-    //if(seconds_2m % 10 == 0) displayArrays(); //For testing
 
-    //Check to see if this is a gust for the minute
-//    if(currentSpeed > windgust_10m[minutes_10m])
-//    {
-//      windgust_10m[minutes_10m] = currentSpeed;
-//      windgustdirection_10m[minutes_10m] = currentDirection;
-//    }
-
-    //Check to see if this is a gust for the day
-//    if(currentSpeed > windgustms)
-//    {
-//      windgustms = currentSpeed;
-//      windgustdir = currentDirection;
-//    }
-    //Minute loop
     seconds += 10; 
+    //Minutes loop
     if(seconds > 59)
     {
       seconds = 0;
@@ -259,12 +236,10 @@ void loop()
 
       rainHour[minutes] = 0; //Zero out this minute's rainfall amount
       //rain5m[minutes_5m] = 0; //Zero out this 5 minutes' rain Niroshan
-//      windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
+
+      //Report all readings every minute
+      printWeather();
     }
-
-    //Report all readings every second
-    printWeather();
-
     digitalWrite(STAT1, LOW); //Turn off stat LED
   }
 
@@ -288,13 +263,9 @@ static void smartdelay(unsigned long ms)
 float get_light_level()
 {
   float operatingVoltage = analogRead(REFERENCE_3V3);
-
   float lightSensor = analogRead(LIGHT);
-
   operatingVoltage = 3.3 / operatingVoltage; //The reference voltage is 3.3V
-
   lightSensor = operatingVoltage * lightSensor;
-
   return(lightSensor);
 }
 
@@ -320,7 +291,6 @@ float get_wind_speed()
   float windSpeed = (float)windClicks / deltaTime; //3 / 0.750s = 4
   windClicks = 0; //Reset and start watching for new wind
   lastWindCheck = millis();
-  //windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
   return(windSpeed);
 }
 
@@ -370,12 +340,6 @@ void printWeather()
   //Calc windspeed
   float windspeedms = get_wind_speed();
 
-  //Calc windgustms
-  //Calc windgustdir
-  //Report the largest windgust today
-//  windgustms = 0;
-//  windgustdir = 0;
-
   //Calc windspdms_avg2m
   float temp = 0;
   for(int i = 0 ; i < 120 ; i++)
@@ -389,21 +353,6 @@ void printWeather()
     temp += winddiravg[i];
   temp /= 120;
   int winddir_avg2m = temp;
-
-  //Calc windgustms_10m
-  //Calc windgustdir_10m
-  //Find the largest windgust in the last 10 minutes
-//  windgustms_10m = 0;
-//  windgustdir_10m = 0;
-  //Step through the 10 minutes  
-//  for(int i = 0; i < 10 ; i++)
-//  {
-//    if(windgust_10m[i] > windgustms_10m)
-//    {
-//      windgustms_10m = windgust_10m[i];
-//      windgustdir_10m = windgustdirection_10m[i];
-//    }
-//  }
 
   //Calc humidity
   float humidity = myHumidity.readHumidity();
