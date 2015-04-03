@@ -470,16 +470,14 @@ void printWeather()
   //--------------------------
 
   //lcd.clear();
-  //lcd.print("Longitude (dd.d)");
-  //lcd.setCursor(0, 2);
+  //lcd.print(F("Lon:"));
   //lcd.print(gps.location.lng(), 6);
-  //delay(2000);
-  
-  //lcd.clear();
-  //lcd.print("Latitude (dd.d)");
+  //lcd.print(F(" (dd.d)"));
   //lcd.setCursor(0, 2);
+  //lcd.print(F("Lat:"));
   //lcd.print(gps.location.lat(), 6);
-  //delay(2000);
+  //lcd.print(F(" (dd.d)"));
+  //delay(5000);
   
   lcd.clear();
   sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
@@ -487,27 +485,27 @@ void printWeather()
   lcd.setCursor(0, 2);
   sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
   lcd.print(sz);
-  lcd.print(" GMT");
+  lcd.print(F(" GMT"));
   delay(5000);
   
   lcd.clear();
-  lcd.print("WD: ");
+  lcd.print(F("WD: "));
   lcd.print(get_wind_direction());
-  lcd.print(" N=0 CW");
+  lcd.print(F(" N=0 CW"));
   lcd.setCursor(0, 2);
-  lcd.print("WS:");
+  lcd.print(F("WS:"));
   lcd.print(get_wind_speed(), 1);
-  lcd.print(" m/s");
+  lcd.print(F(" m/s"));
   delay(5000);
   
   lcd.clear();
-  lcd.print("H:");
+  lcd.print(F("H:"));
   lcd.print(myHumidity.readHumidity());
-  lcd.print(" %");
+  lcd.print(F(" %"));
   lcd.setCursor(0, 2);
-  lcd.print("T:");
+  lcd.print(F("T:"));
   lcd.print(myPressure.readTemp());
-  lcd.print(" C");
+  lcd.print(F(" C"));
   delay(5000);
   
   //Not enough dynamic memory in UNO
@@ -518,18 +516,18 @@ void printWeather()
   //delay(2000);
   
   lcd.clear();
-  lcd.print("R:");
+  lcd.print(F("R:"));
   lcd.print(rainin);
-  lcd.print(" mm/h");
+  lcd.print(F(" mm/h"));
   lcd.setCursor(0, 2);
-  lcd.print("P:");
+  lcd.print(F("P:"));
   lcd.print(myPressure.readPressure()/100.0);
-  lcd.print(" hPa");
+  lcd.print(F(" hPa"));
   delay(5000);
   
   //Not enough dynamic memory in UNO
   //lcd.clear();
-  //lcd.print("Rain 5min (mm)");
+  //lcd.print(F("Rain 5min (mm)"));
   //lcd.setCursor(0, 2);
   //lcd.print(rainin_5m);
   //delay(2000);
@@ -537,14 +535,14 @@ void printWeather()
 
   //Not enough dynamic memory in UNO
   //lcd.clear();
-  //lcd.print("Battery Level");
+  //lcd.print(F("Battery Level"));
   //lcd.setCursor(0, 2);
   //lcd.print(get_battery_level());
   //delay(2000);
 
   //Not enough dynamic memory in UNO
   //lcd.clear();
-  //lcd.print("Sunlight");
+  //lcd.print(F("Sunlight"));
   //lcd.setCursor(0, 2);
   //lcd.print(get_light_level());
   //delay(2000);
