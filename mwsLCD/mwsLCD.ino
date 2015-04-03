@@ -469,15 +469,15 @@ void printWeather()
   //PRINT TO LCD
   //--------------------------
 
-  //lcd.clear();
-  //lcd.print(F("Lon:"));
-  //lcd.print(gps.location.lng(), 6);
-  //lcd.print(F(" (dd.d)"));
-  //lcd.setCursor(0, 2);
-  //lcd.print(F("Lat:"));
-  //lcd.print(gps.location.lat(), 6);
-  //lcd.print(F(" (dd.d)"));
-  //delay(5000);
+  lcd.clear();
+  lcd.print(F("Lon:"));
+  lcd.print(gps.location.lng(), 4);
+  lcd.print(F(" (dd.d)"));
+  lcd.setCursor(0, 2);
+  lcd.print(F("Lat:"));
+  lcd.print(gps.location.lat(), 4);
+  lcd.print(F(" (dd.d)"));
+  delay(5000);
   
   lcd.clear();
   sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
