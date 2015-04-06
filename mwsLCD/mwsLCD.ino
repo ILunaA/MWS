@@ -185,6 +185,7 @@ void setup()
   digitalWrite(STAT1, HIGH); //Blink stat LED 1 second
   delay(1000);
   digitalWrite(STAT1, LOW); //Blink stat LED
+  delay(1000);
   smartdelay(60000); //Wait 60 seconds, and gather GPS data
   minutes = gps.time.minute();
   //minutes_5m = gps.time.minute();
@@ -238,10 +239,10 @@ static void smartdelay(unsigned long ms)
   do 
   {
       digitalWrite(STAT1, HIGH); //Blink stat LED
-      delay(250);
+      delay(500);
       while (ss.available()) gps.encode(ss.read());
-      delay(250);
       digitalWrite(STAT1, LOW); //Blink stat LED
+      delay(500);
   } 
   while (millis() - start < ms);
 }

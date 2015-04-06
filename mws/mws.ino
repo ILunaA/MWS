@@ -117,12 +117,12 @@ volatile byte windClicks = 0;
 //Rain over the past hour (store 1 per minute)
 //Total rain over date (store one per day)
 
-byte windspdavg[120]; //120 bytes to keep track of 2 minute average
-int winddiravg[120]; //120 ints to keep track of 2 minute average
-float windgust_10m[10]; //10 floats to keep track of 10 minute max //Yann: to check if OK
-volatile float rain5m[5]; //Niroshan 5 float to keep rain data of 5 mnts  //Yann: added volatile
-int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
-volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes of rain
+byte windspdavg[120]={0}; //120 bytes to keep track of 2 minute average
+int winddiravg[120]={0}; //120 ints to keep track of 2 minute average
+float windgust_10m[10]={0.0}; //10 floats to keep track of 10 minute max //Yann: to check if OK
+volatile float rain5m[5]={0.0}; //Niroshan 5 float to keep rain data of 5 mnts  //Yann: added volatile
+int windgustdirection_10m[10]={0}; //10 ints to keep track of 10 minute max
+volatile float rainHour[60]={0.0}; //60 floating numbers to keep track of 60 minutes of rain
 
 //These are all the weather values that wunderground expects:
 int winddir = 0; // [0-360 instantaneous wind direction]
@@ -146,17 +146,11 @@ float batt_lvl = 11.8; //[analog value from 0 to 1023]
 float light_lvl = 455; //[analog value from 0 to 1023]
 //Rain time stamp Niroshan
 int Rainindi=0;
-//Variables used for GPS
-//float flat, flon; // 39.015024 -102.283608686
-//unsigned long age;
-//int year;
-//byte month, day, hour, minute, second, hundredths;
 
 // volatiles are subject to modification by IRQs
 volatile unsigned long raintime, rainlast, raininterval, rain;
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
 //Interrupt routines (these are called by the hardware interrupts, not by the main code)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 void rainIRQ()
@@ -165,7 +159,6 @@ void rainIRQ()
 {
   raintime = millis(); // grab current time
   raininterval = raintime - rainlast; // calculate interval between this and last event
-
   if (raininterval > 10) // ignore switch-bounce glitches less than 10mS after initial edge
   {
     dailyrainin += 0.011*25.4; //Each dump is 0.011" of water
@@ -221,7 +214,7 @@ void setup()
   myPressure.setOversampleRate(7); // Set Oversample to the recommended 128
   myPressure.enableEventFlags(); // Enable all three pressure and temp event flags 
 
-    //Configure the humidity sensor
+  //Configure the humidity sensor
   myHumidity.begin();
 
   smartdelay(60000); //Wait 60 seconds, and gather GPS data
@@ -230,43 +223,31 @@ void setup()
   minutes_10m = gps.time.minute();
   seconds = gps.time.second();
   lastSecond = millis();
-  //Serial.println("");
-  //Serial.println(minutes);
-  //Serial.println(minutes_5m);  
-  //Serial.println(minutes_10m);
-  //Serial.println(seconds);
-  //Serial.println(lastSecond);
   // attach external interrupt pins to IRQ functions
   attachInterrupt(0, rainIRQ, FALLING);
   attachInterrupt(1, wspeedIRQ, FALLING);
-
   // turn on interrupts
   interrupts();
-
-  //Serial.println("Weather Shield online!");
-
 }
 
 void loop()
 {
   //Keep track of which minute it is
-  if(millis() - lastSecond >= 10000)
+  if(millis() - lastSecond >= 1000)
   {
     digitalWrite(STAT1, HIGH); //Blink stat LED
 
-    lastSecond += 10000;
+    lastSecond += 1000;
 
     //Take a speed and direction reading every second for 2 minute average
-    seconds_2m += 10; 
+    seconds_2m += 1; 
     if(seconds_2m > 119) seconds_2m = 0;
 
     //Calc the wind speed and direction every second for 120 second to get 2 minute average
     float currentSpeed = get_wind_speed();
-    //float currentSpeed = random(5); //For testing
     int currentDirection = get_wind_direction();
     windspdavg[seconds_2m] = (int)currentSpeed;
     winddiravg[seconds_2m] = currentDirection;
-    //if(seconds_2m % 10 == 0) displayArrays(); //For testing
 
     //Check to see if this is a gust for the minute
     if(currentSpeed > windgust_10m[minutes_10m])
@@ -282,7 +263,7 @@ void loop()
       windgustdir = currentDirection;
     }
     //Minute loop
-    seconds += 10; 
+    seconds += 1; 
     if(seconds > 59)
     {
       seconds = 0;
@@ -295,10 +276,10 @@ void loop()
       rainHour[minutes] = 0; //Zero out this minute's rainfall amount
       rain5m[minutes_5m] = 0; //Zero out this 5 minutes' rain Niroshan
       windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
-    }
 
-    //Report all readings every second
-    printWeather();
+      //Report all readings every minute
+      printWeather();
+    }
 
     digitalWrite(STAT1, LOW); //Turn off stat LED
   }
@@ -328,68 +309,82 @@ void calcWeather()
   //Calc windspeed
   windspeedms = get_wind_speed();
 
-  //Calc windgustms
-  //Calc windgustdir
+  //Calc windgustms & windgustdir
   //Report the largest windgust today
   windgustms = 0;
   windgustdir = 0;
 
   //Calc windspdms_avg2m
-  float temp = 0;
-  for(int i = 0 ; i < 120 ; i++)
-    temp += windspdavg[i];
-  temp /= 120.0;
-  windspdms_avg2m = temp;
+  if(seconds_2m==0){
+    windspdms_avg2m = 0.0;
+    for(int i = 0 ; i < 120 ; i++)
+      windspdms_avg2m += (float)windspdavg[i];
+    windspdms_avg2m /= 120.0;
 
-  //Calc winddir_avg2m
-  temp = 0; //Can't use winddir_avg2m because it's an int
-  for(int i = 0 ; i < 120 ; i++)
-    temp += winddiravg[i];
-  temp /= 120;
-  winddir_avg2m = temp;
-
-  //Calc windgustms_10m
-  //Calc windgustdir_10m
-  //Find the largest windgust in the last 10 minutes
-  windgustms_10m = 0;
-  windgustdir_10m = 0;
-  //Step through the 10 minutes  
-  for(int i = 0; i < 10 ; i++)
-  {
-    if(windgust_10m[i] > windgustms_10m)
-    {
-      windgustms_10m = windgust_10m[i];
-      windgustdir_10m = windgustdirection_10m[i];
+    //Calc winddir_avg2m
+    winddir_avg2m = 0;
+    float temp = 0.0;  
+    int count=0;
+    for(int i = 0 ; i < 120 ; i++){
+      if(winddiravg[i]>=0 && winddiravg[i]<=360){
+        temp += winddiravg[i];
+        count+=1;
+      }
     }
+    temp /= count*1.0;
+    winddir_avg2m = (int)temp;
   }
 
+  //Set -1 if not reporting
+  windgustms_10m = -1;
+  windgustdir_10m = -1;
+  //Compute if 10 minutes passed
+  if(minutes_10m == 0){
+    //Calc windgustms_10m & windgustdir_10m
+    //Find the largest windgust in the last 10 minutes
+    windgustms_10m = 0;
+    windgustdir_10m = 0;
+    //Step through the 10 minutes  
+    for(int i = 0; i < 10 ; i++)
+    {
+      if(windgust_10m[i] > windgustms_10m)
+      {
+        windgustms_10m = windgust_10m[i];
+        windgustdir_10m = windgustdirection_10m[i];
+      }
+    }
+  }
   //Calc humidity
   humidity = myHumidity.readHumidity();
   //float temp_h = myHumidity.readTemperature();
-  //Serial.print(" TempH:");
-  //Serial.print(temp_h, 2);
+
 
   //Calc tempf from pressure sensor
   tempf = myPressure.readTemp();
-  //Serial.print(" TempP:");
-  //Serial.print(tempf, 2);
 
   //Total rainfall for the day is calculated within the interrupt
-  //Calculate amount of rainfall for the last 60 minutes
-  //Niroshan Stop the gathering hourly rain fall data
-  rainin = 0;  
-  for(int i = 0 ; i < 60 ; i++) //change to 60 mnts 
-    rainin += rainHour[i];
+  
+  //Calculate amount of rainfall for the last 60 minutes  
+  //Set to -1 if not reporting
+  rainin = -1;
+  //Compute if 60 minutes passed
+  if(minutes == 0){
+    rainin = 0;  
+    for(int i = 0 ; i < 60 ; i++) //change to 60 mnts 
+      rainin += rainHour[i];
+  }
 
-  rainin_5m = 0;  
-  for(int i = 0 ; i < 5 ; i++) //change to 5 mnts 
-    rainin_5m += rain5m[i];
-
+  //Set -1 if not reporting
+  rainin_5m = -1;
+  //Compute if 5 minuts passed
+  if(minutes_5m == 0){
+    rainin_5m = 0;  
+    for(int i = 0 ; i < 5 ; i++) //change to 5 mnts 
+      rainin_5m += rain5m[i];
+  }
 
   //Calc pressure
   pressure = myPressure.readPressure();
-
-  //Calc dewptf
 
   //Calc light level
   light_lvl = get_light_level();
@@ -404,13 +399,9 @@ void calcWeather()
 float get_light_level()
 {
   float operatingVoltage = analogRead(REFERENCE_3V3);
-
   float lightSensor = analogRead(LIGHT);
-
   operatingVoltage = 3.3 / operatingVoltage; //The reference voltage is 3.3V
-
   lightSensor = operatingVoltage * lightSensor;
-
   return(lightSensor);
 }
 
@@ -421,15 +412,10 @@ float get_light_level()
 float get_battery_level()
 {
   float operatingVoltage = analogRead(REFERENCE_3V3);
-
   float rawVoltage = analogRead(BATT);
-
   operatingVoltage = 3.30 / operatingVoltage; //The reference voltage is 3.3V
-
   rawVoltage = operatingVoltage * rawVoltage; //Convert the 0 to 1023 int to actual voltage on BATT pin
-
   rawVoltage *= 4.90; //(3.9k+1k)/1k - multiple BATT voltage by the voltage divider to get actual system voltage
-
   return(rawVoltage);
 }
 
@@ -458,18 +444,18 @@ int get_wind_direction()
   if (adc < 380) return (113);//NOT WORKING
   else if (adc < 393) return (68);//NOT WORKING
   else if (adc < 414) return (90);//NOT WORKING
-  else if (adc < 456) return (90);//(158);//E is 90 degrees CW from North = 0
+  else if (adc < 456) return (158);//E is 90 degrees CW from North = 0
   else if (adc < 508) return (135);//SE is 135 degrees CW from North = 0
-  else if (adc < 551) return (180);//(203);//S is 180 degrees CW from North = 0
-  else if (adc < 615) return (45);//(180);//NE is 45 degrees CW from North = 0
+  else if (adc < 551) return (203);//S is 180 degrees CW from North = 0
+  else if (adc < 615) return (180);//NE is 45 degrees CW from North = 0
   else if (adc < 680) return (23);//NOT WORKING
-  else if (adc < 746) return (225);//(45);//SW is 225 degrees CW from North = 0
+  else if (adc < 746) return (45);//SW is 225 degrees CW from North = 0
   else if (adc < 801) return (248);//NOT WORKING
-  else if (adc < 833) return (0);//(225);//N is 0 degrees CW from North = 0
+  else if (adc < 833) return (225);//N is 0 degrees CW from North = 0
   else if (adc < 878) return (338);//NOT WORKING
-  else if (adc < 913) return (325);//(0);//NW is 325 degrees CW from North = 0
+  else if (adc < 913) return (0);//NW is 325 degrees CW from North = 0
   else if (adc < 940) return (293);//NOT WORKING
-  else if (adc < 967) return (270);//(315);//W is 270 degrees CW from North = 0
+  else if (adc < 967) return (315);//W is 270 degrees CW from North = 0
   else if (adc < 990) return (270);//NOT WORKING
   else return (-1); // error, disconnected?
 }
