@@ -12,8 +12,8 @@
  a wireless transmitter (such as Electric Imp).
  
  Measurements are reported once a second but windspeed and rain gauge are tied to interrupts that are
- calcualted at each report.
- 
+ calculated at each report.
+
  This example code assumes the GP-635T GPS module is attached.
  
  */
@@ -81,20 +81,24 @@ SoftwareSerial ss(RXPin, TXPin);
 MPL3115A2 myPressure; //Create an instance of the pressure sensor
 HTU21D myHumidity; //Create an instance of the humidity sensor
 
+// Change the rain bucket size with design
+const float RAINBUCKET = 0.011*25.4;// This is WS2080 in mm
+//const float RAINBUCKET = 0.01*25.4;// This is Davisnet Rain collector 2 in mm (to confirm)
+
 //Hardware pin definitions
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // digital I/O pins
-const byte WSPEED = 3;
-const byte RAIN = 2;
-const byte STAT1 = 7;
-const byte STAT2 = 8;
+const byte WSPEED = 3;//WIND SPEED is DIGITAL pin 3
+const byte RAIN = 2;// RAIN is DIGITAL pin 2
+const byte STAT1 = 7;//Status LED Blue
+const byte STAT2 = 8;//Status LED Green
 const byte GPS_PWRCTL = 6; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
 
 // analog I/O pins
 const byte REFERENCE_3V3 = A3;
 const byte LIGHT = A1;
 const byte BATT = A2;
-const byte WDIR = A0;
+const byte WDIR = A0;//WIND DIRECTION is ANALOG pin 0
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Global Variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -159,11 +163,11 @@ void rainIRQ()
 {
   raintime = millis(); // grab current time
   raininterval = raintime - rainlast; // calculate interval between this and last event
-  if (raininterval > 10) // ignore switch-bounce glitches less than 10mS after initial edge
+  if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
   {
-    dailyrainin += 0.011*25.4; //Each dump is 0.011" of water
-    rainHour[minutes] += 0.011*25.4; //Increase this minute's amount of rain
-    rain5m[minutes_5m] +=0.011*25.4; // increase this 5 mnts amout of rain 
+    dailyrainin += RAINBUCKET; //Each dump is RAINBUCKET of water in mm
+    rainHour[minutes] += RAINBUCKET; //Increase this minute's amount of rain
+    rain5m[minutes_5m] += RAINBUCKET; // increase this 5 mnts amout of rain 
     rainlast = raintime; // set up for next event
   }
   //Nirosha  

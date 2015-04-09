@@ -37,20 +37,24 @@ SoftwareSerial ss(RXPin, TXPin);
 MPL3115A2 myPressure; //Create an instance of the pressure sensor
 HTU21D myHumidity; //Create an instance of the humidity sensor
 
+// Change the rain bucket size with design
+const float RAINBUCKET = 0.011*25.4;// This is WS2080 in mm
+//const float RAINBUCKET = 0.01*25.4;// This is Davisnet Rain collector 2 in mm (to confirm)
+
 //Hardware pin definitions
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // digital I/O pins
-const byte WSPEED = 3;
-const byte RAIN = 2;
-const byte STAT1 = 7;
-const byte STAT2 = 8;
+const byte WSPEED = 3;//WIND SPEED is DIGITAL pin 3
+const byte RAIN = 2;// RAIN is DIGITAL pin 2
+const byte STAT1 = 7;//Status LED Blue
+const byte STAT2 = 8;//Status LED Green
 const byte GPS_PWRCTL = 6; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
 
 // analog I/O pins
 const byte REFERENCE_3V3 = A3;
 const byte LIGHT = A1;
 const byte BATT = A2;
-const byte WDIR = A0;
+const byte WDIR = A0;//WIND DIRECTION is ANALOG pin 0
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //Global Variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -59,11 +63,16 @@ byte seconds; //When it hits 60, increase the current minute
 byte seconds_2m; //Keeps track of the "wind speed/dir avg" over last 2 minutes array of data
 byte minutes; //Keeps track of where we are in various arrays of data
 byte minutes_10m; //Keeps track of where we are in wind gust/dir over last 10 minutes array of data
-//byte minutes_5m; // Niroshan this is for 5 mnts rain 
+byte minutes_5m; // Niroshan this is for 5 mnts rain 
 
+//volatiles are subject to modification by IRQs
 long lastWindCheck = 0;
 volatile long lastWindIRQ = 0;
 volatile byte windClicks = 0;
+
+long lastRainCheck = 0;
+volatile long lastRainIRQ = 0;
+volatile byte rainClicks = 0;
 
 //We need to keep track of the following variables:
 //Wind speed/dir each update (no storage)
@@ -72,11 +81,6 @@ volatile byte windClicks = 0;
 //Wind gust/dir over last 10 minutes (store 1 per minute)
 //Rain over the past hour (store 1 per minute)
 //Total rain over date (store one per day)
-
-//volatiles are subject to modification by IRQs
-volatile unsigned long rainlast;
-volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes of rain
-//volatile float rain5m[5]; //Niroshan 5 float to keep rain data of 5 mnts  //Yann: added volatile
 
 byte windspdavg[120]; //120 bytes to keep track of 2 minute average
 int winddiravg[120]; //120 ints to keep track of 2 minute average
@@ -94,34 +98,33 @@ int winddiravg[120]; //120 ints to keep track of 2 minute average
 //int windgustdir_10m = 0; // [0-360 past 10 minutes wind gust direction]
 //float humidity = 0; // [%]
 //float tempc = 0; // [temperature C]
-//float rainin = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
-//float rainin_5m = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
-volatile float dailyrainin = 0; // [rain inches so far today in local time]
+float dailyrainin = 0; // [rain inches so far today in local time]
+float rainin = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
+float rainin_5m = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
+byte Rainindi = 0; // 5 minutes rain Flag
 //float baromin = 30.03;// [barom in] - It's hard to calculate baromin locally, do this in the agent
 //float pressure;
 //float dewptf; // [dewpoint F] - It's hard to calculate dewpoint locally, do this in the agent
 
 //float batt_lvl = 11.8; //[analog value from 0 to 1023]
 //float light_lvl = 455; //[analog value from 0 to 1023]
-//Rain time stamp Niroshan // Has to be global variable !
-//int Rainindi=0;
 
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Interrupt routines (these are called by the hardware interrupts, not by the main code)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-void rainIRQ()
+//void rainIRQ()
 // Count rain gauge bucket tips as they occur
 // Activated by the magnet and reed switch in the rain gauge, attached to input D2
-{
-  if (millis() - rainlast > 10) // ignore switch-bounce glitches less than 10mS after initial edge
-  {
-    rainlast = millis(); // set up for next event
-    dailyrainin += 0.011*25.4; //Each dump is 0.011" of water
-    rainHour[minutes] += 0.011*25.4; //Add this minute's amount of rain
-    //rain5m[minutes_5m] +=0.011*25.4; // Add this minute's amout of rain 
-  }
+//{
+//  if (millis() - rainlast > 10) // ignore switch-bounce glitches less than 10mS after initial edge
+//  {
+//    rainlast = millis(); // set up for next event
+//    dailyrainin += RAINBUCKET; //Each dump is RAINBUCKET of water
+//    rainHour[minutes] += RAINBUCKET; //Add this minute's amount of rain
+    //rain5m[minutes_5m] += RAINBUCKET; // Add this minute's amout of rain 
+//  }
   //Removed for dynamic memory reduction
   //Nirosha  
   //Rain flag (1)
@@ -130,6 +133,17 @@ void rainIRQ()
   //  Rainindi=1;
   //}
   //Niroshan
+//}
+
+void rainIRQ()
+// Count rain gauge bucket tips as they occur
+// Activated by the magnet and reed switch in the rain gauge, attached to input D2
+{
+  if (millis() - lastRainIRQ > 20) // Ignore switch-bounce glitches less than 20ms after the reed switch closes
+  {
+    lastRainIRQ = millis(); //Grab the current time
+    rainClicks++; //There is RAINBUCKET for each click per second.
+  }
 }
 
 void wspeedIRQ()
@@ -216,12 +230,12 @@ void loop()
       seconds = 0;
 
       if(++minutes % 60 == 0) minutes = 0;
-      //if(++minutes_5m % 5 == 0) Rainindi = 0;
-      //if(minutes_5m % 5 == 0) minutes_5m = 0;
       if(++minutes_10m % 10 == 0) minutes_10m = 0;
+      if(++minutes_5m % 5 == 0) Rainindi = 0;
+      if(++minutes_5m % 5 == 0) rainin_5m = 0;
+      if(minutes_5m % 5 == 0) minutes_5m = 0;
 
-      rainHour[minutes] = 0; //Zero out this minute's rainfall amount
-      //rain5m[minutes_5m] = 0; //Zero out this 5 minutes' rain Niroshan
+      rainin = 0; //Zero out this minute's rainfall amount
 
       //Report all readings every minute
       printWeather();
@@ -282,7 +296,17 @@ float get_wind_speed()
   lastWindCheck = millis();
   windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
   windSpeed *= 0.44704; //5.968MPH * 0.44704 = 2.6679 m/s
+  if(windSpeed > 0.2) windSpeed -= 0.2;
   return(windSpeed);
+}
+
+//Rain stats
+float get_rain()
+{
+  float rain = (float)rainClicks * RAINBUCKET; //3 * 0.011" = 0.033"
+  rainClicks = 0; //Reset and start watching for new wind
+  if(rain > 0.2) rain -= 0.2;//There is a persisting glitch in the IRQ
+  return(rain);
 }
 
 //Read the wind direction sensor, return heading in degrees
@@ -318,13 +342,17 @@ int get_wind_direction()
 //I don't like the way this function is written but Arduino doesn't support floats under sprintf
 void printWeather()
 {
-      //Turn on orange led during data gathering
-      digitalWrite(STAT2, HIGH); //Turn on stat LED
+  //Turn on orange led during data gathering
+  digitalWrite(STAT2, HIGH); //Turn on stat LED
 
-  //calcWeather(); //Go calc all the various sensors
-//Calculates each of the variables that wunderground is expecting
-//void calcWeather()
-//{ //RE INTEGRATED TO SAVE GLOBAL VARIABLE ALLOCATION FOR UNO
+  //Calculates each of the variables that wunderground is expecting
+  //Calc rain now
+  float rain = get_rain();
+  dailyrainin += rain; //Each dump is RAINBUCKET of water
+  rainin += rain;//Add to this hour's amount of rain
+  //rainin_5m += rain;//Add to these 5 minutes' amount of rain
+  if(rain) Rainindi=1; else Rainindi=0; //Rain flag
+  
   //Calc winddir
   //int winddir = get_wind_direction();
 
@@ -355,18 +383,6 @@ void printWeather()
   //float tempc = myPressure.readTemp();
   //Serial.print(F(" TempP:"));
   //Serial.print(tempc, 2);
-
-  //Total rainfall for the day is calculated within the interrupt
-  //Calculate amount of rainfall for the last 60 minutes
-  //Niroshan Stop the gathering hourly rain fall data
-  float rainin = 0;  
-  for(int i = 0 ; i < 60 ; i++) //change to 60 mnts 
-    rainin += rainHour[i];
-
-  //float rainin_5m = 0;  
-  //for(int i = 0 ; i < 5 ; i++) //change to 5 mnts 
-  //  rainin_5m += rain5m[i];
-
 
   //Calc pressure
   //float pressure = myPressure.readPressure();
@@ -503,20 +519,23 @@ void printWeather()
   delay(5000);
   
   //Not enough dynamic memory in UNO
-  //lcd.clear();
-  //lcd.print("Rain Daily (mm)");
-  //lcd.setCursor(0, 2);
-  //lcd.print(dailyrainin);
-  //delay(2000);
-  
-  lcd.clear();
-  lcd.print(F("R:"));
-  lcd.print(rainin);
-  lcd.print(F(" mm/h"));
+   lcd.clear();
+  lcd.print("R:");
+  lcd.print(dailyrainin);
+  lcd.print("(mm/d)");
   lcd.setCursor(0, 2);
   lcd.print(F("P:"));
   lcd.print(myPressure.readPressure()/100.0);
   lcd.print(F(" hPa"));
+  delay(5000);
+
+  lcd.clear();
+  lcd.print(F("R:"));
+  lcd.print(rain);
+  lcd.print(F(" mm"));
+  lcd.setCursor(0, 2);
+  lcd.print(F("5 min Raining? "));
+  if(Rainindi) lcd.print(F("Yes")); else lcd.print(F(" No"));
   delay(5000);
   
   //Not enough dynamic memory in UNO
@@ -528,17 +547,17 @@ void printWeather()
   
 
   //Not enough dynamic memory in UNO
-  //lcd.clear();
-  //lcd.print(F("Battery Level"));
-  //lcd.setCursor(0, 2);
-  //lcd.print(get_battery_level());
-  //delay(2000);
+  lcd.clear();
+  lcd.print(F("Battery Level"));
+  lcd.setCursor(0, 2);
+  lcd.print(get_battery_level());
+  delay(2000);
 
   //Not enough dynamic memory in UNO
-  //lcd.clear();
-  //lcd.print(F("Sunlight"));
-  //lcd.setCursor(0, 2);
-  //lcd.print(get_light_level());
+  lcd.clear();
+  lcd.print(F("Sunlight"));
+  lcd.setCursor(0, 2);
+  lcd.print(get_light_level());
   //delay(2000);
 
 }
