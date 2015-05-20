@@ -166,8 +166,6 @@ void setup()
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   lcd.backlight();
-  lcd.clear();
-  lcd.print(F("Display ON"));
 
   ss.begin(9600); //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
   Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
