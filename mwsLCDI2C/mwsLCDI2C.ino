@@ -513,11 +513,11 @@ void printWeather()
   
   lcd.clear();
   lcd.print(F("H:"));
-  lcd.print(myHumidity.readHumidity());
+  lcd.print(myHumidity.readHumidity(),2);
   lcd.print(F(" %"));
   lcd.setCursor(0, 2);
   lcd.print(F("T:"));
-  lcd.print(myPressure.readTemp());
+  lcd.print(myPressure.readTemp(),2);
   lcd.print(F(" C"));
   delay(5000);
   
@@ -528,7 +528,7 @@ void printWeather()
   lcd.print("(mm/d)");
   lcd.setCursor(0, 2);
   lcd.print(F("P:"));
-  lcd.print(myPressure.readPressure()/100.0);
+  lcd.print(myPressure.readPressure()/100.0,2);
   lcd.print(F(" hPa"));
   delay(5000);
 
