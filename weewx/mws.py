@@ -42,7 +42,7 @@ INHG_PER_MBAR = 0.0295333727
 METER_PER_FOOT = 0.3048
 MILE_PER_KM = 0.621371
 
-DEFAULT_PORT = '/dev/ttyS0'
+DEFAULT_PORT = '/dev/ttyUSB0'
 DEBUG_READ = 0
 
 
@@ -65,7 +65,7 @@ class MWSDriver(weewx.drivers.AbstractDevice):
     """weewx driver that communicates with an IWMI-MWS station
     
     port - serial port
-    [Required. Default is /dev/ttyS0]
+    [Required. Default is /dev/ttyUSB0]
 
     polling_interval - how often to query the serial interface, seconds
     [Optional. Default is 1]
@@ -134,7 +134,7 @@ class MWSDriver(weewx.drivers.AbstractDevice):
 class Station(object):
     def __init__(self, port):
         self.port = port
-        self.baudrate = 2400
+        self.baudrate = 9600
         self.timeout = 3
         self.serial_port = None
 
@@ -230,7 +230,7 @@ class MWSConfEditor(weewx.drivers.AbstractConfEditor):
 
     def prompt_for_settings(self):
         print "Specify the serial port on which the station is connected, for"
-        print "example /dev/ttyUSB0 or /dev/ttyS0."
+        print "example /dev/ttyUSB0 or /dev/ttyACM0."
         port = self._prompt('port', '/dev/ttyUSB0')
         return {'port': port}
 
