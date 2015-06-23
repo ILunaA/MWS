@@ -474,64 +474,56 @@ void printWeather()
   calcWeather(); //Go calc all the various sensors
 
   Serial.println();
-  Serial.print("$,lon=");
   Serial.print(gps.location.lng(), 6);
-  Serial.print(",lat=");
+  Serial.print(",");
   Serial.print(gps.location.lat(), 6);
-  Serial.print(",altitude=");
+  Serial.print(",");
   Serial.print(gps.altitude.meters());
-  Serial.print(",sats=");
+  Serial.print(",");
   Serial.print(gps.satellites.value());
 
   char sz[32];
-  Serial.print(",date=");
+  Serial.print(",");
   sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
   Serial.print(sz);
 
-  Serial.print(",time=");
+  Serial.print(",");
   sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
   Serial.print(sz);
 
-  Serial.print(",RTCdate=20");
-  sprintf(sz, "%s", getDateDs1307(0));
-  Serial.print(sz);  
-  Serial.print(",RTCtime=");
-  sprintf(sz, "%s", getDateDs1307(1));
-  Serial.print(sz);  
-
-  Serial.print(",winddir=");
+  Serial.print(",");
   Serial.print(winddir);
-  Serial.print(",windspeedms=");
+  Serial.print(",");
   Serial.print(windspeedms, 1);
-  Serial.print(",windgustms=");
+  Serial.print(",");
   Serial.print(windgustms, 1);
-  Serial.print(",windgustdir=");
+  Serial.print(",");
   Serial.print(windgustdir);
-  Serial.print(",windspdms_avg2m=");
+  Serial.print(",");
   Serial.print(windspdms_avg2m, 1);
-  Serial.print(",winddir_avg2m=");
+  Serial.print(",");
   Serial.print(winddir_avg2m);
-  Serial.print(",windgustms_10m=");
+  Serial.print(",");
   Serial.print(windgustms_10m, 1);
-  Serial.print(",windgustdir_10m=");
+  Serial.print(",");
   Serial.print(windgustdir_10m);
-  Serial.print(",humidity=");
+  Serial.print(",");
   Serial.print(humidity, 1);
-  Serial.print(",tempc=");
+  Serial.print(",");
   Serial.print(tempf, 1);
-  Serial.print(",rainhourmm=");
+  Serial.print(",");
   Serial.print(rainin, 2);
-  Serial.print(",raindailymm=");
+  Serial.print(",");
   Serial.print(dailyrainin, 2);
-  Serial.print(",rainindicate=");
+  Serial.print(",");
   Serial.print(Rainindi,1);
-  Serial.print(",raindura=");
+  Serial.print(",");
   Serial.print(Rainindinter);
-  Serial.print(",pressure=");
+  Serial.print(",");
   Serial.print(pressure, 2);
-  Serial.print(",batt_lvl=");
+  Serial.print(",");
   Serial.print(batt_lvl, 2);
-  Serial.print(",light_lvl=");
+  Serial.print(",");
   Serial.print(light_lvl, 2);
   
 

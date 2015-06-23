@@ -207,10 +207,10 @@ class Station(object):
         data['windDir'] = b[6]  # compass degrees
         data['windSpeed'] = b[7]*3.6*MILE_PER_KM  # mph
         data['windGust'] = b[8]*3.6*MILE_PER_KM  # mph
-        data['inHumidity'] = b[13]  # percent
-        data['inTemp'] = b[14]*9.0/5.0+32.0  # degree_F
-        data['daily_rain'] = b[15]*0.03937  # inch
-        data['pressure'] = b[19]*100.0*INHG_PER_MBAR  # inHg
+        data['inHumidity'] = b[14]  # percent
+        data['inTemp'] = b[15]*9.0/5.0+32.0  # degree_F
+        data['daily_rain'] = b[17]*0.03937  # inch
+        data['pressure'] = b[20]*100.0*INHG_PER_MBAR  # inHg
         return data
 
 
