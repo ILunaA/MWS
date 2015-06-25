@@ -151,7 +151,6 @@ float light_lvl = 455; //[analog value from 0 to 1023]
 //Rain time stamp
 int Rainindi=0;
 //Variables used for GPS
-//float flat, flon; // 39.015024 -102.283608686
 //unsigned long age;
 //int year;
 //byte month, day, hour, minute, second, hundredths;
@@ -601,7 +600,6 @@ void printWeather()
   lcd.print(F(" C"));
   delay(5000);
   
-  //Not enough dynamic memory in UNO
   lcd.clear();
   lcd.print("R:");
   lcd.print(dailyrainin);
@@ -612,7 +610,6 @@ void printWeather()
   lcd.print(F(" hPa"));
   delay(5000);
 
-  //Not enough dynamic memory in UNO
   lcd.clear();
   lcd.print(F("Battery Level"));
   lcd.print(get_battery_level());
