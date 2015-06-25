@@ -249,8 +249,18 @@ void setup()
 
   // turn on interrupts
   interrupts();
-
-  //Serial.println("Weather Shield online!");
+  digitalWrite(STAT1, HIGH); //Blink stat LED 1 second
+  delay(1000);
+  digitalWrite(STAT1, LOW); //Blink stat LED
+  smartdelay(60000); //Wait 60 seconds, and gather GPS data
+  minutes = gps.time.minute();
+  minutes_10m = gps.time.minute();
+  seconds = gps.time.second();
+  lastSecond = millis();
+  digitalWrite(STAT1, HIGH); //Blink stat LED 1 second
+  delay(1000);
+  digitalWrite(STAT1, LOW); //Blink stat LED
+  lcd.print("Weather Station online!");
 
 }
 
