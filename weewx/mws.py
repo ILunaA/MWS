@@ -173,10 +173,10 @@ class Station(object):
             c = self.read(1)
             if c == "\r":
                 break
-            b.append(c)
+            b.append([cc.strip() for cc in c.split(',')])
         if DEBUG_READ:
             logdbg("bytes: '%s'" % _format(b))
-        return b.split(",")
+        return b[0]
 
     @staticmethod
     def parse_readings(b):
