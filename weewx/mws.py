@@ -42,8 +42,8 @@ INHG_PER_MBAR = 0.0295333727
 METER_PER_FOOT = 0.3048
 MILE_PER_KM = 0.621371
 
-DEFAULT_PORT = '/dev/ttyUSB0'
-DEBUG_READ = 0
+DEFAULT_PORT = '/dev/ttyACM0'
+DEBUG_READ = 1
 
 
 def logmsg(level, msg):
@@ -57,9 +57,6 @@ def loginf(msg):
 
 def logerr(msg):
     logmsg(syslog.LOG_ERR, msg)
-
-def _format(buf):
-    return ' '.join(["%0.2X" % ord(c) for c in buf])
 
 class MWSDriver(weewx.drivers.AbstractDevice):
     """weewx driver that communicates with an IWMI-MWS station
@@ -135,7 +132,7 @@ class Station(object):
     def __init__(self, port):
         self.port = port
         self.baudrate = 9600
-        self.timeout = 3
+        self.timeout = 60
         self.serial_port = None
 
     def __enter__(self):
@@ -156,26 +153,19 @@ class Station(object):
             self.serial_port.close()
             self.serial_port = None
 
-    def read(self, nchar=1):
-        buf = self.serial_port.read(nchar)
-        n = len(buf)
-        if n != nchar:
-            if DEBUG_READ and n:
-                logdbg("partial buffer: '%s'" % _format(buf))
-            raise weewx.WeeWxIOError("Read expected %d chars, got %d" %
-                                     (nchar, n))
+    def read(self):
+        buf = self.serial_port.readline()
+        n = len(buf)#maybe useful for debug in future
         return buf
 
     def get_readings(self):
         b = []
         bad_byte = False
         while True:
-            c = self.read(1)
-            if c == "\r":
-                break
+            c = self.read()
             b.append([cc.strip() for cc in c.split(',')])
         if DEBUG_READ:
-            logdbg("bytes: '%s'" % _format(b))
+            logdbg(b)
         return b[0]
 
     @staticmethod
@@ -231,7 +221,7 @@ class MWSConfEditor(weewx.drivers.AbstractConfEditor):
     def prompt_for_settings(self):
         print "Specify the serial port on which the station is connected, for"
         print "example /dev/ttyUSB0 or /dev/ttyACM0."
-        port = self._prompt('port', '/dev/ttyUSB0')
+        port = self._prompt('port', '/dev/ttyACM0')
         return {'port': port}
 
 

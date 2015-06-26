@@ -214,7 +214,7 @@ void setup()
   lcd.backlight();
   
   ss.begin(9600); //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
-  Serial.print(F("lon,lat,altitude,sats,date,GMTtime,RTCdate,RTCtime,winddir"));
+  Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
   Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
   Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,rainindicate,rainduration,pressure,batt_lvl,light_lvl"));
 
@@ -506,22 +506,22 @@ void printWeather()
   Serial.print(gps.satellites.value());
 
   char sz[32];
-  Serial.print(",date=");
+  Serial.print(",");
   sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
   Serial.print(sz);
 
-  Serial.print(",time=");
+  Serial.print(",");
   sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
   Serial.print(sz);
 
   //Serial.print(",RTCdate=20");
-  Serial.print(",");
-  sprintf(sz, "%s", getDateDs1307(0));
-  Serial.print(sz);  
+  //Serial.print(",");
+  //sprintf(sz, "%s", getDateDs1307(0));
+  //Serial.print(sz);  
   //Serial.print(",RTCtime=");
-  Serial.print(",");
-  sprintf(sz, "%s", getDateDs1307(1));
-  Serial.print(sz);  
+  //Serial.print(",");
+  //sprintf(sz, "%s", getDateDs1307(1));
+  //Serial.print(sz);  
 
   Serial.print(",");
   Serial.print(winddir);
