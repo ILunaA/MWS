@@ -154,9 +154,25 @@ class Station(object):
             self.serial_port = None
 
     def read(self):
-        buf = self.serial_port.readline()
-        n = len(buf)#maybe useful for debug in future
-        return buf
+	global last
+    	buf = ''
+	n = 0 #test for minimum length sentence
+	count = 0 #keep track of how many read lines
+        while n < 115:
+		try:
+			buf = self.serial_port.readline()
+       			n = len(buf)#maybe useful for debug in future
+			count += 1
+			print(buf)
+        		if DEBUG_READ:
+            			logdbg(buf)
+			if n >= 114 and count >= 2:
+				break
+		except:
+			#do nothing
+			count += 0
+        
+	return buf
 
     def get_readings(self):
         b = []
@@ -164,13 +180,15 @@ class Station(object):
         while True:
             c = self.read()
             b.append([cc.strip() for cc in c.split(',')])
+	    print(b[0])
         if DEBUG_READ:
-            logdbg(b)
+            logdbg(b[0])
         return b[0]
 
     @staticmethod
     def parse_readings(b):
-        """MWS station emits csv data format:
+        """
+	  MWS station emits csv data format:
 
           #Serial.print("lon,lat,altitude,sats,date,GMTtime,winddir");
           #Serial.print(",windspeedms,windgustms,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m");
@@ -190,7 +208,7 @@ class Station(object):
           rain 5 minutes (mm/5min)
           rain indicator 5 mins (0/1 flag)
           pressure (hPa)
-          Battery Level
+          Battery Level (V)
           Light level
         """
         data = dict()
@@ -198,9 +216,14 @@ class Station(object):
         data['windSpeed'] = b[7]*3.6*MILE_PER_KM  # mph
         data['windGust'] = b[8]*3.6*MILE_PER_KM  # mph
         data['inHumidity'] = b[14]  # percent
+        data['outTemp'] = b[15]*9.0/5.0+32.0  # degree_F #Just to try
         data['inTemp'] = b[15]*9.0/5.0+32.0  # degree_F
         data['daily_rain'] = b[17]*0.03937  # inch
         data['pressure'] = b[20]*100.0*INHG_PER_MBAR  # inHg
+	
+	print(b[15],data['outTemp'])
+        if DEBUG_READ:
+            logdbg(data)
         return data
 
 
