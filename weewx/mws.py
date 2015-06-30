@@ -158,7 +158,7 @@ class Station(object):
     	buf = ''
 	n = 0 #test for minimum length sentence
 	count = 0 #keep track of how many read lines
-        while n < 115:
+        while n < 114:
 		try:
 			buf = self.serial_port.readline()
        			n = len(buf)#maybe useful for debug in future
@@ -171,7 +171,6 @@ class Station(object):
 		except:
 			#do nothing
 			count += 0
-        
 	return buf
 
     def get_readings(self):
@@ -212,14 +211,14 @@ class Station(object):
           Light level
         """
         data = dict()
-        data['windDir'] = b[6]  # compass degrees
-        data['windSpeed'] = b[7]*3.6*MILE_PER_KM  # mph
-        data['windGust'] = b[8]*3.6*MILE_PER_KM  # mph
-        data['inHumidity'] = b[14]  # percent
-        data['outTemp'] = b[15]*9.0/5.0+32.0  # degree_F #Just to try
-        data['inTemp'] = b[15]*9.0/5.0+32.0  # degree_F
-        data['daily_rain'] = b[17]*0.03937  # inch
-        data['pressure'] = b[20]*100.0*INHG_PER_MBAR  # inHg
+        data['windDir'] = float(b[6])  # compass degrees
+        data['windSpeed'] = float(b[7]*3.6*MILE_PER_KM)  # mph
+        data['windGust'] = float(b[8]*3.6*MILE_PER_KM)  # mph
+        data['inHumidity'] = float(b[14])  # percent
+        data['outTemp'] = float(b[15]*9.0/5.0+32.0)  # degree_F #Just to try
+        data['inTemp'] = float(b[15]*9.0/5.0+32.0)  # degree_F
+        data['daily_rain'] = float(b[17]*0.03937)  # inch
+        data['pressure'] = float(b[20]*100.0*INHG_PER_MBAR)  # inHg
 	
 	print(b[15],data['outTemp'])
         if DEBUG_READ:
@@ -274,4 +273,5 @@ if __name__ == '__main__':
 
     with Station(options.port) as s:
         while True:
-            print time.time(), s.get_readings()
+            print time.time(), s.get_readings(), 
+
