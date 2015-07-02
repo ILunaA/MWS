@@ -8,7 +8,7 @@
 # http://www.iwmi.cgiar.org/resources/mobile-weather-stations/
 
 
-"""Driver for IWMI MWS weather stations.
+"""Driver for MWS weather stations.
 
 Modified from weewx/trunk/drivers/ws1.py 
 
@@ -43,7 +43,7 @@ METER_PER_FOOT = 0.3048
 MILE_PER_KM = 0.621371
 
 DEFAULT_PORT = '/dev/ttyACM0'
-DEBUG_READ = 1
+DEBUG_READ = 0
 
 
 def logmsg(level, msg):
@@ -62,7 +62,7 @@ class MWSDriver(weewx.drivers.AbstractDevice):
     """weewx driver that communicates with an IWMI-MWS station
     
     port - serial port
-    [Required. Default is /dev/ttyUSB0]
+    [Required. Default is /dev/ttyACM0]
 
     polling_interval - how often to query the serial interface, seconds
     [Optional. Default is 1]
@@ -117,11 +117,11 @@ class MWSDriver(weewx.drivers.AbstractDevice):
 
     def _augment_packet(self, packet):
         # calculate the rain delta from rain total
-        if self.last_rain is not None:
-            packet['rain'] = packet['long_term_rain'] - self.last_rain
-        else:
-            packet['rain'] = None
-        self.last_rain = packet['long_term_rain']
+        #if self.last_rain is not None:
+        #    packet['rain'] = packet['long_term_rain'] - self.last_rain
+        #else:
+        #    packet['rain'] = None
+        #self.last_rain = packet['long_term_rain']
 
         # no wind direction when wind speed is zero
         if 'windSpeed' in packet and not packet['windSpeed']:
@@ -154,7 +154,6 @@ class Station(object):
             self.serial_port = None
 
     def read(self):
-	n = 0 #test for minimum length sentence
 	buff=[]
 	try:
 		buf = self.serial_port.readline()
@@ -206,14 +205,13 @@ class Station(object):
         data = dict()
         data['altimeter'] = float(b[2])  # GPS altitude
         data['windDir'] = float(b[6])  # compass degrees
-        data['windSpeed'] = float(b[7]*3.6*MILE_PER_KM)  # mph
-        data['windGust'] = float(b[8]*3.6*MILE_PER_KM)  # mph
+        data['windSpeed'] = float(b[7])*3.6*MILE_PER_KM  # mph
+        data['windGust'] = float(b[8])*3.6*MILE_PER_KM  # mph
         data['inHumidity'] = float(b[14])  # percent
-        data['outTemp'] = float(b[15]*9.0/5.0+32.0)  # degree_F #Just to try
-        data['inTemp'] = float(b[15]*9.0/5.0+32.0)  # degree_F
-        data['daily_rain'] = float(b[17]*0.03937)  # inch
-        data['pressure'] = float(b[20]*100.0*INHG_PER_MBAR)  # inHg
-	
+        data['outTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F #Just to try
+        data['inTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F
+        data['daily_rain'] = float(b[17])*0.03937  # inch
+        data['pressure'] = float(b[20])/100000.0*INHG_PER_MBAR  # inHg
         if DEBUG_READ:
             logdbg(data)
         return data
@@ -243,7 +241,8 @@ class MWSConfEditor(weewx.drivers.AbstractConfEditor):
 # define a main entry point for basic testing of the station without weewx
 # engine and service overhead.  invoke this as follows from the weewx root dir:
 #
-# PYTHONPATH=bin python bin/weewx/drivers/mws.py
+# Ubuntu standard set up with user driver:
+# PYTHONPATH=bin python /usr/share/weewx/user/mws.py
 
 if __name__ == '__main__':
     import optparse
@@ -261,7 +260,7 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
     if options.version:
-        print "IWMI MWS driver version %s" % DRIVER_VERSION
+        print "MWS driver version %s" % DRIVER_VERSION
         exit(0)
 
     with Station(options.port) as s:
