@@ -154,32 +154,29 @@ class Station(object):
             self.serial_port = None
 
     def read(self):
-	global last
-    	buf = ''
 	n = 0 #test for minimum length sentence
-	count = 0 #keep track of how many read lines
-        while n < 114:
-		try:
-			buf = self.serial_port.readline()
-       			n = len(buf)#maybe useful for debug in future
-			count += 1
-			print(buf)
-        		if DEBUG_READ:
-            			logdbg(buf)
-			if n >= 114 and count >= 2:
-				break
-		except:
-			#do nothing
-			count += 0
-	return buf
+	buff=[]
+	try:
+		buf = self.serial_port.readline()
+		i = 0
+		for i in range(5):
+			buf += self.serial_port.readline()
+			i+=1
+		buff=buf.split('\r\n')[-2].split(',')
+       		n = len(buff)
+       		if DEBUG_READ:
+           		logdbg(buff)
+	except:
+		#do nothing
+		n = 0
+	return buff
 
     def get_readings(self):
         b = []
         bad_byte = False
         while True:
-            c = self.read()
-            b.append([cc.strip() for cc in c.split(',')])
-	    print(b[0])
+            b = self.read()
+	    print(b)
         if DEBUG_READ:
             logdbg(b[0])
         return b[0]
@@ -211,6 +208,7 @@ class Station(object):
           Light level
         """
         data = dict()
+        data['altimeter'] = float(b[2])  # GPS altitude
         data['windDir'] = float(b[6])  # compass degrees
         data['windSpeed'] = float(b[7]*3.6*MILE_PER_KM)  # mph
         data['windGust'] = float(b[8]*3.6*MILE_PER_KM)  # mph
@@ -220,6 +218,7 @@ class Station(object):
         data['daily_rain'] = float(b[17]*0.03937)  # inch
         data['pressure'] = float(b[20]*100.0*INHG_PER_MBAR)  # inHg
 	
+	print(b[2],data['altimeter'])
 	print(b[15],data['outTemp'])
         if DEBUG_READ:
             logdbg(data)
@@ -273,5 +272,5 @@ if __name__ == '__main__':
 
     with Station(options.port) as s:
         while True:
-            print time.time(), s.get_readings(), 
+            print time.time(), s.parse_readings(s.get_readings) 
 
