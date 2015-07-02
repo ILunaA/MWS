@@ -214,8 +214,6 @@ class Station(object):
         data['daily_rain'] = float(b[17]*0.03937)  # inch
         data['pressure'] = float(b[20]*100.0*INHG_PER_MBAR)  # inHg
 	
-	print(b[2],data['altimeter'])
-	print(b[15],data['outTemp'])
         if DEBUG_READ:
             logdbg(data)
         return data
