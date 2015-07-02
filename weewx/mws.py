@@ -172,14 +172,10 @@ class Station(object):
 	return buff
 
     def get_readings(self):
-        b = []
-        bad_byte = False
-        while True:
-            b = self.read()
-	    print(b)
+        b = self.read()
         if DEBUG_READ:
-            logdbg(b[0])
-        return b[0]
+            logdbg(b)
+        return b
 
     @staticmethod
     def parse_readings(b):
@@ -272,5 +268,5 @@ if __name__ == '__main__':
 
     with Station(options.port) as s:
         while True:
-            print time.time(), s.parse_readings(s.get_readings) 
+            print time.time(), s.get_readings() 
 
