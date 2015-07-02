@@ -43,7 +43,7 @@ METER_PER_FOOT = 0.3048
 MILE_PER_KM = 0.621371
 
 DEFAULT_PORT = '/dev/ttyACM0'
-DEBUG_READ = 0
+DEBUG_READ = 1
 
 
 def logmsg(level, msg):
@@ -59,24 +59,24 @@ def logerr(msg):
     logmsg(syslog.LOG_ERR, msg)
 
 class MWSDriver(weewx.drivers.AbstractDevice):
-    """weewx driver that communicates with an IWMI-MWS station
+    """weewx driver that communicates with a MWS station
     
     port - serial port
     [Required. Default is /dev/ttyACM0]
 
     polling_interval - how often to query the serial interface, seconds
-    [Optional. Default is 1]
+    [Optional. Default is 10]
 
     max_tries - how often to retry serial communication before giving up
-    [Optional. Default is 5]
+    [Optional. Default is 50]
 
     retry_wait - how long to wait, in seconds, before retrying after a failure
     [Optional. Default is 10]
     """
     def __init__(self, **stn_dict):
         self.port = stn_dict.get('port', DEFAULT_PORT)
-        self.polling_interval = float(stn_dict.get('polling_interval', 1))
-        self.max_tries = int(stn_dict.get('max_tries', 5))
+        self.polling_interval = float(stn_dict.get('polling_interval', 10))
+        self.max_tries = int(stn_dict.get('max_tries', 50))
         self.retry_wait = int(stn_dict.get('retry_wait', 10))
         self.last_rain = None
         loginf('driver version is %s' % DRIVER_VERSION)
