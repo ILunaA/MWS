@@ -81,7 +81,10 @@ char* getDateDs1307(int flag) {
 
 TinyGPSPlus gps;
 
-static const int RXPin = 5, TXPin = 4; //GPS is attached to pin 4(TX from GPS) and pin 5(RX into GPS)
+//For Arduino Uno
+//static const int RXPin = 5, TXPin = 4; //GPS is attached to pin 4(TX from GPS) and pin 5(RX into GPS)
+//For Arduino Mega
+static const int RXPin = 6, TXPin = 7; //GPS is attached to pin 7(TX from GPS) and pin 6(RX into GPS)
 SoftwareSerial ss(RXPin, TXPin); 
 
 MPL3115A2 myPressure; //Create an instance of the pressure sensor
@@ -94,7 +97,10 @@ const byte WSPEED = 3;
 const byte RAIN = 2;
 const byte STAT1 = 7;
 const byte STAT2 = 8;
-const byte GPS_PWRCTL = 6; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
+//For Arduino Uno
+//const byte GPS_PWRCTL = 6; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
+//For Arduino Mega
+const byte GPS_PWRCTL = 5; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
 
 // analog I/O pins
 const byte REFERENCE_3V3 = A3;
