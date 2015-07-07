@@ -9,8 +9,12 @@ Optional (plug n play):
 - Generic LCD16x02 with I2C adaptor (more here: http://arduino-info.wikispaces.com/LCD-Blue-I2C)
 
 Required male-to-male cables:
-- I2C: Weather Shield A4 to Arduino Mega Pin20 (SDA)
-- I2C: Weather Shield A5 to Arduino Mega Pin21 (SCL)
+- I2C sensors: Weather Shield A4 to Arduino Mega Pin20 (SDA)
+- I2C sensors: Weather Shield A5 to Arduino Mega Pin21 (SCL)
+- I2C LCD: Weather Shield A1? to Arduino Mega Pin20 (SDA)
+- I2C LCD: Weather Shield A2? to Arduino Mega Pin21 (SCL)
+- COM GPS: Weather Shield PIN4 to Arduino Mega Pin51
+- COM GPS: Weather Shield PIN5 to Arduino Mega Pin50
 
 GPS "soft" switch mode:
 - Communicates through D4/D5 (same as Arduino Uno R3)
