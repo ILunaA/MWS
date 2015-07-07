@@ -260,12 +260,7 @@ void setup()
   digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
   delay(1000);
   digitalWrite(STAT2, LOW); //Blink stat LED
-  smartdelay(30000); //Wait 60 seconds, and gather GPS data
-  Serial.println("");
-  Serial.print("LAT=");  Serial.println(gps.location.lat(), 6);
-  Serial.print("LONG="); Serial.println(gps.location.lng(), 6);
-  Serial.print("TIME="); Serial.print(gps.time.hour(), 6);
-  Serial.print(":");Serial.println(gps.time.minute(), 6);
+  smartdelay(60000); //Wait 60 seconds, and gather GPS data
   minutes = gps.time.minute();
   minutes_10m = gps.time.minute();
   seconds = gps.time.second();
