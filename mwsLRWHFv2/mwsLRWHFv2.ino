@@ -84,7 +84,7 @@ TinyGPSPlus gps;
 //For Arduino Uno
 //static const int RXPin = 5, TXPin = 4; //GPS is attached to pin 4(TX from GPS) and pin 5(RX into GPS)
 //For Arduino Mega
-static const int RXPin = 6, TXPin = 7; //GPS is attached to pin 7(TX from GPS) and pin 6(RX into GPS)
+static const int RXPin = 50, TXPin = 51; //GPS is attached to pin 7(TX from GPS) and pin 6(RX into GPS)
 SoftwareSerial ss(RXPin, TXPin); 
 
 MPL3115A2 myPressure; //Create an instance of the pressure sensor
@@ -93,20 +93,18 @@ HTU21D myHumidity; //Create an instance of the humidity sensor
 //Hardware pin definitions
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 // digital I/O pins
-const byte WSPEED = 3;
 const byte RAIN = 2;
-const byte STAT1 = 7;
+const byte WSPEED = 3;
+const byte GPS_PWRCTL = 6; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
+//For Arduino Uno Only
+//const byte STAT1 = 7;
 const byte STAT2 = 8;
-//For Arduino Uno
-//const byte GPS_PWRCTL = 6; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
-//For Arduino Mega
-const byte GPS_PWRCTL = 5; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
 
 // analog I/O pins
-const byte REFERENCE_3V3 = A3;
+const byte WDIR = A0;
 const byte LIGHT = A1;
 const byte BATT = A2;
-const byte WDIR = A0;
+const byte REFERENCE_3V3 = A3;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Global Variables
@@ -182,7 +180,7 @@ void rainIRQ()
 
     rainlast = raintime; // set up for next event
   }
-  
+
   //Rain or not (1 or 0)
   if(rainin >0)
   {
@@ -191,12 +189,12 @@ void rainIRQ()
   }
   if(rainin ==0)
   {
-   Rainindi=0; 
-   Rainindlast = millis();
-   Rainindlast = Rainindtime;
+    Rainindi=0; 
+    Rainindlast = millis();
+    Rainindlast = Rainindtime;
   }
   Rainindinter = Rainindlast - Rainindtime;
-  
+
 }
 
 void wspeedIRQ()
@@ -207,32 +205,37 @@ void wspeedIRQ()
     lastWindIRQ = millis(); //Grab the current time
     windClicks++; //There is 1.492MPH for each click per second.
   }
-  
+
 }
 
 
 void setup()
 {
+  //Switch on the GPS
+  pinMode(GPS_PWRCTL, OUTPUT);
+  digitalWrite(GPS_PWRCTL, HIGH); //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
+
+  //Start Serial port reporting
   Serial.begin(9600);
-  
+
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   lcd.backlight();
-  
-  ss.begin(9600); //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
+
+  //Start software serial for GPS
+  //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
+  ss.begin(9600); 
   Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
   Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
   Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,rainindicate,rainduration,pressure,batt_lvl,light_lvl"));
 
-  pinMode(STAT1, OUTPUT); //Status LED Blue
+  //For Arduino UNO Only
+  //pinMode(STAT1, OUTPUT); //Status LED Blue
   pinMode(STAT2, OUTPUT); //Status LED Green
-  
-  pinMode(GPS_PWRCTL, OUTPUT);
-  digitalWrite(GPS_PWRCTL, HIGH); //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
-  
+
   pinMode(WSPEED, INPUT_PULLUP); // input from wind meters windspeed sensor
   pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
-  
+
   pinMode(REFERENCE_3V3, INPUT);
   pinMode(LIGHT, INPUT);
 
@@ -242,7 +245,7 @@ void setup()
   myPressure.setOversampleRate(7); // Set Oversample to the recommended 128
   myPressure.enableEventFlags(); // Enable all three pressure and temp event flags 
 
-  //Configure the humidity sensor
+    //Configure the humidity sensor
   myHumidity.begin();
 
   seconds = 0;
@@ -254,17 +257,22 @@ void setup()
 
   // turn on interrupts
   interrupts();
-  digitalWrite(STAT1, HIGH); //Blink stat LED 1 second
+  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
   delay(1000);
-  digitalWrite(STAT1, LOW); //Blink stat LED
-  smartdelay(60000); //Wait 60 seconds, and gather GPS data
+  digitalWrite(STAT2, LOW); //Blink stat LED
+  smartdelay(30000); //Wait 60 seconds, and gather GPS data
+  Serial.println("");
+  Serial.print("LAT=");  Serial.println(gps.location.lat(), 6);
+  Serial.print("LONG="); Serial.println(gps.location.lng(), 6);
+  Serial.print("TIME="); Serial.print(gps.time.hour(), 6);
+  Serial.print(":");Serial.println(gps.time.minute(), 6);
   minutes = gps.time.minute();
   minutes_10m = gps.time.minute();
   seconds = gps.time.second();
   lastSecond = millis();
-  digitalWrite(STAT1, HIGH); //Blink stat LED 1 second
+  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
   delay(1000);
-  digitalWrite(STAT1, LOW); //Blink stat LED
+  digitalWrite(STAT2, LOW); //Blink stat LED
   lcd.print("Weather Station online!");
 
 }
@@ -274,8 +282,8 @@ void loop()
   //Keep track of which minute it is
   if(millis() - lastSecond >= 1000)
   {
-    digitalWrite(STAT1, HIGH); //Blink stat LED
-    
+    digitalWrite(STAT2, HIGH); //Blink stat LED
+
     lastSecond += 1000;
 
     //Take a speed and direction reading every second for 2 minute average
@@ -302,7 +310,7 @@ void loop()
       windgustms = currentSpeed;
       windgustdir = currentDirection;
     }
-    
+
     if(++seconds > 59)
     {
       seconds = 0;
@@ -317,7 +325,7 @@ void loop()
     //Report all readings every second
     printWeather();
 
-    digitalWrite(STAT1, LOW); //Turn off stat LED
+    digitalWrite(STAT2, LOW); //Turn off stat LED
   }
 
   smartdelay(800); //Wait 1 second, and gather GPS data
@@ -331,7 +339,8 @@ static void smartdelay(unsigned long ms)
   {
     while (ss.available())
       gps.encode(ss.read());
-  } while (millis() - start < ms);
+  } 
+  while (millis() - start < ms);
 }
 
 
@@ -406,7 +415,7 @@ void calcWeather()
 
   //Calc battery level
   batt_lvl = get_battery_level();
-  
+
 }
 
 //Returns the voltage of the light sensor based on the 3.3V rail
@@ -416,11 +425,11 @@ float get_light_level()
   float operatingVoltage = analogRead(REFERENCE_3V3);
 
   float lightSensor = analogRead(LIGHT);
-  
+
   operatingVoltage = 3.3 / operatingVoltage; //The reference voltage is 3.3V
-  
+
   lightSensor = operatingVoltage * lightSensor;
-  
+
   return(lightSensor);
 }
 
@@ -433,13 +442,13 @@ float get_battery_level()
   float operatingVoltage = analogRead(REFERENCE_3V3);
 
   float rawVoltage = analogRead(BATT);
-  
+
   operatingVoltage = 3.30 / operatingVoltage; //The reference voltage is 3.3V
-  
+
   rawVoltage = operatingVoltage * rawVoltage; //Convert the 0 to 1023 int to actual voltage on BATT pin
-  
+
   rawVoltage *= 4.90; //(3.9k+1k)/1k - multiple BATT voltage by the voltage divider to get actual system voltage
-  
+
   return(rawVoltage);
 }
 
@@ -576,7 +585,7 @@ void printWeather()
   lcd.print(F("Lat:"));
   lcd.print(gps.location.lat(), 6);
   delay(5000);
-  
+
   lcd.clear();
   sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
   lcd.print(sz);
@@ -585,7 +594,7 @@ void printWeather()
   lcd.print(sz);
   lcd.print(F(" GMT"));
   delay(5000);
-  
+
   lcd.clear();
   lcd.print(F("WD: "));
   lcd.print(get_wind_direction());
@@ -595,7 +604,7 @@ void printWeather()
   lcd.print(get_wind_speed(), 1);
   lcd.print(F(" m/s"));
   delay(5000);
-  
+
   lcd.clear();
   lcd.print(F("H:"));
   lcd.print(myHumidity.readHumidity(),2);
@@ -605,7 +614,7 @@ void printWeather()
   lcd.print(myPressure.readTemp(),2);
   lcd.print(F(" C"));
   delay(5000);
-  
+
   lcd.clear();
   lcd.print("R:");
   lcd.print(dailyrainin);
@@ -627,5 +636,6 @@ void printWeather()
 
 
 }
+
 
 
