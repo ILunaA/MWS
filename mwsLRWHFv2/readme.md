@@ -11,8 +11,8 @@ Optional (plug n play):
 Required male-to-male cables:
 - I2C sensors: Weather Shield A4 to Arduino Mega Pin20 (SDA)
 - I2C sensors: Weather Shield A5 to Arduino Mega Pin21 (SCL)
-- I2C LCD: Weather Shield A1? to Arduino Mega Pin20 (SDA)
-- I2C LCD: Weather Shield A2? to Arduino Mega Pin21 (SCL)
+- I2C LCD SDA to Arduino Mega Pin20 (SDA)
+- I2C LCD SCL to Arduino Mega Pin21 (SCL)
 - COM GPS: Weather Shield PIN4 to Arduino Mega Pin51
 - COM GPS: Weather Shield PIN5 to Arduino Mega Pin50
 
