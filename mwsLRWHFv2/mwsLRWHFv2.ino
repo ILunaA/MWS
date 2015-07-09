@@ -28,7 +28,10 @@
 //https://bitbucket.org/fmalpartida/new-liquidcrystal/wiki/Home
 
 //This is for the 16x2 LCD
+//Most of them are using this
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+//Some use this PCF8574
+//LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 //this is for RTC
 int clockAddress = 0x68;  // This is the I2C address
@@ -221,7 +224,8 @@ void setup()
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   lcd.backlight();
-
+  lcd.print("Start MWS");
+  
   //Start software serial for GPS
   //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
   ss.begin(9600); 
