@@ -219,6 +219,7 @@ class Station(object):
         data['outTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F #Just to try
         data['inTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F
         data['daily_rain'] = float(b[17])*0.03937  # inch
+        data['rain'] = float(b[19])*0.03937  # inch
         data['pressure'] = float(b[20])/100000.0*INHG_PER_MBAR  # inHg
         if DEBUG_READ:
             logdbg(data)
