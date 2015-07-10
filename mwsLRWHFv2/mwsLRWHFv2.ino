@@ -29,9 +29,9 @@
 
 //This is for the 16x2 LCD
 //Most of them are using this
-LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+//LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 //Some use this PCF8574
-//LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 //this is for RTC
 int clockAddress = 0x68;  // This is the I2C address
@@ -116,6 +116,7 @@ long lastSecond; //The millis counter to see when a second rolls by
 byte seconds; //When it hits 60, increase the current minute
 byte seconds_2m; //Keeps track of the "wind speed/dir avg" over last 2 minutes array of data
 byte minutes; //Keeps track of where we are in various arrays of data
+byte minutes_5m; //Keeps track of where we are in rain5min over last 5 minutes array of data
 byte minutes_10m; //Keeps track of where we are in wind gust/dir over last 10 minutes array of data
 
 long lastWindCheck = 0;
@@ -135,6 +136,7 @@ int winddiravg[120]; //120 ints to keep track of 2 minute average
 float windgust_10m[10]; //10 floats to keep track of 10 minute max
 int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
 volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes of rain
+volatile float rain5min[5]; //5 floating numbers to keep track of 5 minutes of rain
 
 //These are all the weather values that wunderground expects:
 int winddir = 0; // [0-360 instantaneous wind direction]
@@ -148,7 +150,8 @@ int windgustdir_10m = 0; // [0-360 past 10 minutes wind gust direction]
 float humidity = 0; // [%]
 float tempf = 0; // [temperature F]
 float rainin = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
-volatile float dailyrainin = 0; // [rain inches so far today in local time]
+volatile float dailyrainin = 0.0; // [rain inches so far today in local time]
+volatile float rainin5min=0.0; // [rain inches so far last 5 minutes in local time]
 //float baromin = 30.03;// [barom in] - It's hard to calculate baromin locally, do this in the agent
 float pressure = 0;
 //float dewptf; // [dewpoint F] - It's hard to calculate dewpoint locally, do this in the agent
@@ -162,8 +165,11 @@ int Rainindi=0;
 //int year;
 //byte month, day, hour, minute, second, hundredths;
 
+//Calibrate rain bucket here
+float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
+
 // volatiles are subject to modification by IRQs
-volatile unsigned long raintime, rainlast, raininterval, rain, Rainindinter, Rainindtime, Rainindlast;
+volatile unsigned long raintime, rainlast, raininterval, rain, Rainindtime, Rainindlast;
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -178,8 +184,8 @@ void rainIRQ()
 
     if (raininterval > 10) // ignore switch-bounce glitches less than 10mS after initial edge
   {
-    dailyrainin += 0.011*25.4; //Each dump is 0.011" of water
-    rainHour[minutes] += 0.011*25.4; //Increase this minute's amount of rain
+    dailyrainin += rain_bucket_mm; 
+    rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
 
     rainlast = raintime; // set up for next event
   }
@@ -196,8 +202,6 @@ void rainIRQ()
     Rainindlast = millis();
     Rainindlast = Rainindtime;
   }
-  Rainindinter = Rainindlast - Rainindtime;
-
 }
 
 void wspeedIRQ()
@@ -231,7 +235,7 @@ void setup()
   ss.begin(9600); 
   Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
   Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
-  Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,rainindicate,rainduration,pressure,batt_lvl,light_lvl"));
+  Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,rainindicate,rain5min,pressure,batt_lvl,light_lvl"));
 
   //For Arduino UNO Only
   //pinMode(STAT1, OUTPUT); //Status LED Blue
@@ -266,6 +270,7 @@ void setup()
   digitalWrite(STAT2, LOW); //Blink stat LED
   smartdelay(60000); //Wait 60 seconds, and gather GPS data
   minutes = gps.time.minute();
+  minutes_5m = gps.time.minute();
   minutes_10m = gps.time.minute();
   seconds = gps.time.second();
   lastSecond = millis();
@@ -273,7 +278,6 @@ void setup()
   delay(1000);
   digitalWrite(STAT2, LOW); //Blink stat LED
   lcd.print("Weather Station online!");
-
 }
 
 void loop()
@@ -315,9 +319,11 @@ void loop()
       seconds = 0;
 
       if(++minutes > 59) minutes = 0;
+      if(++minutes_5m > 4) minutes_5m = 0;
       if(++minutes_10m > 9) minutes_10m = 0;
 
       rainHour[minutes] = 0; //Zero out this minute's rainfall amount
+      rain5min[minutes_5m] = 0; //Zero out this minute's rain
       windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
     }
 
@@ -399,6 +405,10 @@ void calcWeather()
   //Serial.print(tempf, 2);
 
   //Total rainfall for the day is calculated within the interrupt
+  //Calculate amount of rainfall for the last 60 minutes
+  rainin5min = 0;  
+  for(int i = 0 ; i < 5 ; i++)
+    rainin5min += rain5min[i];
   //Calculate amount of rainfall for the last 60 minutes
   rainin = 0;  
   for(int i = 0 ; i < 60 ; i++)
@@ -510,22 +520,21 @@ void printWeather()
   calcWeather(); //Go calc all the various sensors
 
   Serial.println();
-  //Serial.print("$,lon=");
-  Serial.print(gps.location.lng(), 6);
+  Serial.print(gps.location.lng(), 6);//[0]
   Serial.print(",");
-  Serial.print(gps.location.lat(), 6);
+  Serial.print(gps.location.lat(), 6);//[1]
   Serial.print(",");
-  Serial.print(gps.altitude.meters());
+  Serial.print(gps.altitude.meters());//[2]
   Serial.print(",");
-  Serial.print(gps.satellites.value());
+  Serial.print(gps.satellites.value());//[3]
 
   char sz[32];
   Serial.print(",");
-  sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
+  sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());//[4]
   Serial.print(sz);
 
   Serial.print(",");
-  sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
+  sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());//[5]
   Serial.print(sz);
 
   //Serial.print(",RTCdate=20");
@@ -538,39 +547,39 @@ void printWeather()
   //Serial.print(sz);  
 
   Serial.print(",");
-  Serial.print(winddir);
+  Serial.print(winddir);//[6]
   Serial.print(",");
-  Serial.print(windspeedms, 1);
+  Serial.print(windspeedms, 1);//[7]
   Serial.print(",");
-  Serial.print(windgustms, 1);
+  Serial.print(windgustms, 1);//[8]
   Serial.print(",");
-  Serial.print(windgustdir);
+  Serial.print(windgustdir);//[9]
   Serial.print(",");
-  Serial.print(windspdms_avg2m, 1);
+  Serial.print(windspdms_avg2m, 1);//[10]
   Serial.print(",");
-  Serial.print(winddir_avg2m);
+  Serial.print(winddir_avg2m);//[11]
   Serial.print(",");
-  Serial.print(windgustms_10m, 1);
+  Serial.print(windgustms_10m, 1);//[12]
   Serial.print(",");
-  Serial.print(windgustdir_10m);
+  Serial.print(windgustdir_10m);//[13]
   Serial.print(",");
-  Serial.print(humidity, 1);
+  Serial.print(humidity, 1);//[14]
   Serial.print(",");
-  Serial.print(tempf, 1);
+  Serial.print(tempf, 1);//[15] Celsius
   Serial.print(",");
-  Serial.print(rainin, 2);
+  Serial.print(rainin, 2);//[16] hourly
   Serial.print(",");
-  Serial.print(dailyrainin, 2);
+  Serial.print(dailyrainin, 2);//[17]
   Serial.print(",");
-  Serial.print(Rainindi,1);
+  Serial.print(Rainindi,1);//[18] 5min indicatior (flag 0/1)
   Serial.print(",");
-  Serial.print(Rainindinter);
+  Serial.print(rainin5min,1);//[19] 5min rain (mm/5min)
   Serial.print(",");
-  Serial.print(pressure, 2);
+  Serial.print(pressure, 2);//[20]
   Serial.print(",");
-  Serial.print(batt_lvl, 2);
+  Serial.print(batt_lvl, 2);//[21]
   Serial.print(",");
-  Serial.print(light_lvl, 2);
+  Serial.print(light_lvl, 2);//[22]
   Serial.print(",");
 
   //--------------------------

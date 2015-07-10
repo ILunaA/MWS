@@ -43,7 +43,7 @@ METER_PER_FOOT = 0.3048
 MILE_PER_KM = 0.621371
 
 DEFAULT_PORT = '/dev/ttyACM0'
-DEBUG_READ = 1
+DEBUG_READ = 0
 
 
 def logmsg(level, msg):
@@ -59,24 +59,24 @@ def logerr(msg):
     logmsg(syslog.LOG_ERR, msg)
 
 class MWSDriver(weewx.drivers.AbstractDevice):
-    """weewx driver that communicates with a MWS station
+    """weewx driver that communicates with an IWMI-MWS station
     
     port - serial port
     [Required. Default is /dev/ttyACM0]
 
     polling_interval - how often to query the serial interface, seconds
-    [Optional. Default is 10]
+    [Optional. Default is 1]
 
     max_tries - how often to retry serial communication before giving up
-    [Optional. Default is 50]
+    [Optional. Default is 5]
 
     retry_wait - how long to wait, in seconds, before retrying after a failure
     [Optional. Default is 10]
     """
     def __init__(self, **stn_dict):
         self.port = stn_dict.get('port', DEFAULT_PORT)
-        self.polling_interval = float(stn_dict.get('polling_interval', 10))
-        self.max_tries = int(stn_dict.get('max_tries', 50))
+        self.polling_interval = float(stn_dict.get('polling_interval', 1))
+        self.max_tries = int(stn_dict.get('max_tries', 5))
         self.retry_wait = int(stn_dict.get('retry_wait', 10))
         self.last_rain = None
         loginf('driver version is %s' % DRIVER_VERSION)
@@ -183,30 +183,38 @@ class Station(object):
 
           #Serial.print("lon,lat,altitude,sats,date,GMTtime,winddir");
           #Serial.print(",windspeedms,windgustms,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m");
-          #Serial.print(",humidity,tempc,raindailymm,rainhourmm,rain5mmm,rainindicate,pressure,batt_lvl,light_lvl");
+          #Serial.print(",humidity,tempc,rainhourmm,raindailymm,rainindicate,rain5minmm,pressure,batt_lvl,light_lvl");
 
-          longitude, latitude, altitude, satellites number, date
-          GMT time = GPS time
-          winddir (0-360), windspeed (m/s), windgust (m/s)
-          wind speed avg 2 minutes (m/s)
-          wind direction avg 2 minutes (0-360)
-          wind gust speed avg 10 min (m/s)
-          wind gust dir avg 10 min (0-360)
-          humidity (%)
-          temperature (Celsius)
-          rain daily (mm/d)
-          rain hourly (mm/h)
-          rain 5 minutes (mm/5min)
-          rain indicator 5 mins (0/1 flag)
-          pressure (hPa)
-          Battery Level (V)
-          Light level
+          [0]longitude
+          [1]latitude
+          [2]altitude
+          [3]satellites number
+          [4]date
+          [5]GMT time = GPS time
+          [6]winddir (0-360)
+          [7]windspeed (m/s)
+          [8]windgust (m/s)
+          [9]windgust direction (0-360)
+          [10]wind speed avg 2 minutes (m/s)
+          [11]wind direction avg 2 minutes (0-360)
+          [12]wind gust speed avg 10 min (m/s)
+          [13]wind gust dir avg 10 min (0-360)
+          [14]humidity (%)
+          [15]temperature (Celsius)
+          [16]rain hourly (mm/h)
+          [17]rain daily (mm/d)
+          [18]rain indicator 5 mins (0/1 flag)
+          [19]rain 5 minutes (mm/5min)
+          [20]pressure (hPa)
+          [21]Battery Level (V)
+          [22]Light level
         """
         data = dict()
         data['altimeter'] = float(b[2])  # GPS altitude
         data['windDir'] = float(b[6])  # compass degrees
         data['windSpeed'] = float(b[7])*3.6*MILE_PER_KM  # mph
         data['windGust'] = float(b[8])*3.6*MILE_PER_KM  # mph
+        data['windGustDir'] = float(b[9])  # degrees
         data['inHumidity'] = float(b[14])  # percent
         data['outTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F #Just to try
         data['inTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F
