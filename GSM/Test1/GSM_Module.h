@@ -3,13 +3,13 @@
 #include <avr/pgmspace.h>
 #include <string.h>
 
-#define Default_RX 2
+#define Default_RX 10
 #define Default_TX 3
 
 class GSM_Module{
     public:
-        GSM_Module(uint8_t Module_RX, uint8_t Module_TX);
-        void Start(int baud); 
+        GSM_Module(uint8_t Type);
+        int Init(int baud); 
         void Listen();
         void Refresh(); 
         bool String_Received();
@@ -20,6 +20,7 @@ class GSM_Module{
         void Read_Response();
         String Decode_Sys_Info();
         String Decode_GPRS_Info();
+        String Decode_SIM900_GPRS_Info();
         String Decode_TCP_Info();
         int Decode_Response();
         bool OK_Received();
@@ -32,7 +33,12 @@ class GSM_Module{
         String Match_System_Code(int code);
         int Wait_For_Respond(int Response_Type, bool OK_Needed, bool *Flag, int Time_out);
         int Query_GPRS();
+        int SIM900_Reset_IP();
+        int SIM900_Check_IP_Stack();
+        int SIM900_Single_Connection();
+        int SIM900_Configure_APN(String APN, String USER_NAME, String PASSWARD);
         int Activate_PDP();
+        int SIM900_Get_IP();
         int Configure_TCP(String Host, int Port);
         int Start_TCP_Connection();
         int Query_Socket_Status();
@@ -41,6 +47,7 @@ class GSM_Module{
         int Send_Data(String Data);
         int Send_SMS(String Number, String MSG);
         int TCP_Connect(String HOST, int PORT);
+        int Close_TCP_Connection();
         int POST_Data(String HOST, int PORT, int temp, int hum);
              
 };
