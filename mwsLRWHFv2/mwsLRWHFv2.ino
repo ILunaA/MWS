@@ -166,7 +166,10 @@ int Rainindi=0;
 //byte month, day, hour, minute, second, hundredths;
 
 //Calibrate rain bucket here
+//Rectangle raingauge from Sparkfun.com weather sensors
 float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
+//DAVISNET Rain Collector 2
+//float rain_bucket_mm = 0.01*25.4;//Each dump is 0.01" of water
 
 // volatiles are subject to modification by IRQs
 volatile unsigned long raintime, rainlast, raininterval, rain, Rainindtime, Rainindlast;
@@ -182,11 +185,10 @@ void rainIRQ()
   raintime = millis(); // grab current time
   raininterval = raintime - rainlast; // calculate interval between this and last event
 
-    if (raininterval > 10) // ignore switch-bounce glitches less than 10mS after initial edge
+  if (raininterval > 10) // ignore switch-bounce glitches less than 10mS after initial edge
   {
     dailyrainin += rain_bucket_mm; 
     rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
-
     rainlast = raintime; // set up for next event
   }
 
