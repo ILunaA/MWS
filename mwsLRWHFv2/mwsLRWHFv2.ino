@@ -189,6 +189,7 @@ void rainIRQ()
   {
     dailyrainin += rain_bucket_mm; 
     rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
+    rain5m[minutes_5m] += rain_bucket_mm; // increase this 5 mnts amout of rain
     rainlast = raintime; // set up for next event
   }
 
@@ -407,7 +408,7 @@ void calcWeather()
   //Serial.print(tempf, 2);
 
   //Total rainfall for the day is calculated within the interrupt
-  //Calculate amount of rainfall for the last 60 minutes
+  //Calculate amount of rainfall for the last 5 minutes
   rainin5min = 0;  
   for(int i = 0 ; i < 5 ; i++)
     rainin5min += rain5min[i];
