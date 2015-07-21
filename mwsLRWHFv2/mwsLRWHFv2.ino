@@ -189,7 +189,7 @@ void rainIRQ()
   {
     dailyrainin += rain_bucket_mm; 
     rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
-    rain5m[minutes_5m] += rain_bucket_mm; // increase this 5 mnts amout of rain
+    rain5min[minutes_5m] += rain_bucket_mm; // increase this 5 mnts amout of rain
     rainlast = raintime; // set up for next event
   }
 
