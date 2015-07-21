@@ -37,7 +37,7 @@ for i in range(len(data)):
 		print("Timestamp",i,len(data))
 	#5 is GMTTime
 	if(data[:][i][4] != '' and data[:][i][5] != ''):
-		day,month,year=data[:][i][4].split("/")
+		year,month,day=data[:][i][4].split("/")
 		hour,minute,second=data[:][i][5].split(":")
 		try:
 			X.append(dlt.date2num(datetime.datetime(int(year), int(month), int(day), int(hour), int(minute), int(second))))
