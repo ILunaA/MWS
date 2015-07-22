@@ -167,9 +167,9 @@ int Rainindi=0;
 
 //Calibrate rain bucket here
 //Rectangle raingauge from Sparkfun.com weather sensors
-float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
+//float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
 //DAVISNET Rain Collector 2
-//float rain_bucket_mm = 0.01*25.4;//Each dump is 0.01" of water
+float rain_bucket_mm = 0.01*25.4;//Each dump is 0.01" of water
 
 // volatiles are subject to modification by IRQs
 volatile unsigned long raintime, rainlast, raininterval, rain, Rainindtime, Rainindlast;
@@ -570,13 +570,13 @@ void printWeather()
   Serial.print(",");
   Serial.print(tempf, 1);//[15] Celsius
   Serial.print(",");
-  Serial.print(rainin, 2);//[16] hourly
+  Serial.print(rainin, 3);//[16] hourly
   Serial.print(",");
-  Serial.print(dailyrainin, 2);//[17]
+  Serial.print(dailyrainin, 3);//[17]
   Serial.print(",");
   Serial.print(Rainindi,1);//[18] 5min indicatior (flag 0/1)
   Serial.print(",");
-  Serial.print(rainin5min,1);//[19] 5min rain (mm/5min)
+  Serial.print(rainin5min,3);//[19] 5min rain (mm/5min)
   Serial.print(",");
   Serial.print(pressure, 2);//[20]
   Serial.print(",");
@@ -628,7 +628,7 @@ void printWeather()
 
   lcd.clear();
   lcd.print("R:");
-  lcd.print(dailyrainin);
+  lcd.print(dailyrainin,2);
   lcd.print("(mm/d)");
   lcd.setCursor(0, 2);
   lcd.print(F("P:"));
