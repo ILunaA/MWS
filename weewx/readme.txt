@@ -15,9 +15,12 @@ station_type = MWS #was: Simulator
 ##############################################################################
 
 [MWS]
-
+    
+    # Use a non standard driver called mws
     driver = user.mws
-    loop_interval = 15
+    # Give a 5 minute interval for data storage
+    loop_interval = 300
+    # RPI has this port detected
     port='/dev/ttyACM0'
 
 ##############################################################################
