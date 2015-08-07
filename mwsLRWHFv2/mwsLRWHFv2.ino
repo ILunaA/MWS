@@ -113,6 +113,7 @@ const byte REFERENCE_3V3 = A3;
 //Global Variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 long lastSecond; //The millis counter to see when a second rolls by
+long loopMSecond; //time it took to loop once in millis
 byte seconds; //When it hits 60, increase the current minute
 byte seconds_2m; //Keeps track of the "wind speed/dir avg" over last 2 minutes array of data
 byte minutes; //Keeps track of where we are in various arrays of data
@@ -174,6 +175,8 @@ float rain_bucket_mm = 0.01*25.4;//Each dump is 0.01" of water
 // volatiles are subject to modification by IRQs
 volatile unsigned long raintime, rainlast, raininterval, rain, Rainindtime, Rainindlast;
 
+//for loop
+int i;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Interrupt routines (these are called by the hardware interrupts, not by the main code)
@@ -185,7 +188,7 @@ void rainIRQ()
   raintime = millis(); // grab current time
   raininterval = raintime - rainlast; // calculate interval between this and last event
 
-  if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
+    if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
   {
     dailyrainin += rain_bucket_mm; 
     rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
@@ -232,7 +235,7 @@ void setup()
   lcd.begin(16, 2);
   lcd.backlight();
   lcd.print("Start MWS");
-  
+
   //Start software serial for GPS
   //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
   ss.begin(9600); 
@@ -286,57 +289,58 @@ void setup()
 void loop()
 {
   //Keep track of which minute it is
-  if(millis() - lastSecond >= 1000)
+  loopMSecond = millis() - lastSecond;
+  digitalWrite(STAT2, HIGH); //Blink stat LED
+  lastSecond = millis();
+
+  //Take a speed and direction reading every second for 2 minute average
+  seconds_2m += loopMSecond/1000;
+  if(++seconds_2m > 119) seconds_2m = 0;
+
+  //Calc the wind speed and direction every second for 120 second to get 2 minute average
+  float currentSpeed = get_wind_speed();
+  int currentDirection = get_wind_direction();
+  windspdavg[seconds_2m] = (int)currentSpeed;
+  winddiravg[seconds_2m] = currentDirection;
+
+  //Check to see if this is a gust for the minute
+  if(currentSpeed > windgust_10m[minutes_10m])
   {
-    digitalWrite(STAT2, HIGH); //Blink stat LED
-
-    lastSecond += 1000;
-
-    //Take a speed and direction reading every second for 2 minute average
-    if(++seconds_2m > 119) seconds_2m = 0;
-
-    //Calc the wind speed and direction every second for 120 second to get 2 minute average
-    float currentSpeed = get_wind_speed();
-    //float currentSpeed = random(5); //For testing
-    int currentDirection = get_wind_direction();
-    windspdavg[seconds_2m] = (int)currentSpeed;
-    winddiravg[seconds_2m] = currentDirection;
-    //if(seconds_2m % 10 == 0) displayArrays(); //For testing
-
-    //Check to see if this is a gust for the minute
-    if(currentSpeed > windgust_10m[minutes_10m])
-    {
-      windgust_10m[minutes_10m] = currentSpeed;
-      windgustdirection_10m[minutes_10m] = currentDirection;
-    }
-
-    //Check to see if this is a gust for the day
-    if(currentSpeed > windgustms)
-    {
-      windgustms = currentSpeed;
-      windgustdir = currentDirection;
-    }
-
-    if(++seconds > 59)
-    {
-      seconds = 0;
-
-      if(++minutes > 59) minutes = 0;
-      if(++minutes_5m > 4) minutes_5m = 0;
-      if(++minutes_10m > 9) minutes_10m = 0;
-
-      rainHour[minutes] = 0; //Zero out this minute's rainfall amount
-      rain5min[minutes_5m] = 0; //Zero out this minute's rain
-      windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
-    }
-
-    //Report all readings every second
-    printWeather();
-
-    digitalWrite(STAT2, LOW); //Turn off stat LED
+    windgust_10m[minutes_10m] = currentSpeed;
+    windgustdirection_10m[minutes_10m] = currentDirection;
   }
 
-  smartdelay(800); //Wait 1 second, and gather GPS data
+  //Check to see if this is a gust for the day
+  if(currentSpeed > windgustms)
+  {
+    windgustms = currentSpeed;
+    windgustdir = currentDirection;
+  }
+  seconds += loopMSecond/1000;
+  if(++seconds > 59) seconds = 0;
+  minutes += seconds/60;
+  if(++minutes > 59) minutes = 0;
+  minutes_5m += seconds/60;
+  if(++minutes_5m > 4){
+    minutes_5m = 0;
+    for (i=0;i<5;i++) rain5min[i] = 0;
+  }
+  minutes_10m += seconds/60;
+  if(++minutes_10m > 9){
+    minutes_10m = 0;
+    for (i=0;i<10;i++) windgust_10m[i] = 0;
+  }
+
+  rainHour[minutes] = 0; //Zero out this minute's rainfall amount
+  rain5min[minutes_5m] = 0; //Zero out this minute's rain
+  windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
+
+  //Report all readings
+  printWeather();
+  //Turn off stat LED
+  digitalWrite(STAT2, LOW); 
+  //Wait 1 second, and gather GPS data
+  smartdelay(800); 
 }
 
 //While we delay for a given amount of time, gather GPS data
@@ -398,14 +402,15 @@ void calcWeather()
 
   //Calc humidity
   humidity = myHumidity.readHumidity();
-  //float temp_h = myHumidity.readTemperature();
-  //Serial.print(" TempH:");
-  //Serial.print(temp_h, 2);
-
-  //Calc tempf from pressure sensor
-  tempf = myPressure.readTemp();
-  //Serial.print(" TempP:");
-  //Serial.print(tempf, 2);
+  if(myHumidity.readTemperature())
+  {
+    tempf = myHumidity.readTemperature();
+  } 
+  else
+  {
+    //Calc tempf from pressure sensor
+    tempf = myPressure.readTemp();
+  }
 
   //Total rainfall for the day is calculated within the interrupt
   //Calculate amount of rainfall for the last 5 minutes
@@ -419,8 +424,6 @@ void calcWeather()
 
   //Calc pressure
   pressure = myPressure.readPressure();
-
-  //Calc dewptf
 
   //Calc light level
   light_lvl = get_light_level();
@@ -478,10 +481,6 @@ float get_wind_speed()
 
   //windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
 
-  /* Serial.println();
-   Serial.print("Windspeed:");
-   Serial.println(windSpeed);*/
-
   return(windSpeed);
 }
 
@@ -538,16 +537,7 @@ void printWeather()
 
   Serial.print(",");
   sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());//[5]
-  Serial.print(sz);
-
-  //Serial.print(",RTCdate=20");
-  //Serial.print(",");
-  //sprintf(sz, "%s", getDateDs1307(0));
-  //Serial.print(sz);  
-  //Serial.print(",RTCtime=");
-  //Serial.print(",");
-  //sprintf(sz, "%s", getDateDs1307(1));
-  //Serial.print(sz);  
+  Serial.print(sz); 
 
   Serial.print(",");
   Serial.print(winddir);//[6]
@@ -611,19 +601,29 @@ void printWeather()
   lcd.print(get_wind_direction());
   lcd.print(F(" N=0 CW"));
   lcd.setCursor(0, 2);
-  lcd.print(F("WS:"));
+  lcd.print(F("WS: "));
   lcd.print(get_wind_speed(), 1);
   lcd.print(F(" m/s"));
   delay(5000);
 
   lcd.clear();
-  lcd.print(F("H:"));
+  lcd.print(F("H: "));
   lcd.print(myHumidity.readHumidity(),2);
   lcd.print(F(" %"));
   lcd.setCursor(0, 2);
-  lcd.print(F("T:"));
+  lcd.print(F("T: "));
   lcd.print(myPressure.readTemp(),2);
   lcd.print(F(" C"));
+  delay(5000);
+
+  lcd.clear();
+  lcd.print("R:");
+  lcd.print(rainin5min,2);
+  lcd.print(" mm/5min");
+  lcd.setCursor(0, 2);
+  lcd.print(F("R:"));
+  lcd.print(rainin,2);
+  lcd.print(F(" mm/h"));
   delay(5000);
 
   lcd.clear();
@@ -647,6 +647,7 @@ void printWeather()
 
 
 }
+
 
 
 

@@ -37,6 +37,39 @@
                 }
             }
         </script>
+
+        <script>
+        /* Auto Refresh Page with Time script
+        By JavaScript Kit (javascriptkit.com)
+        Over 200+ free scripts here!*/
+        //enter refresh time in “minutes:seconds” 
+        //Minutes should range from 0 to inifinity. 
+        //Seconds should range from 0 to 59
+        var limit=”1:00″
+        if (document.images){
+            var parselimit=limit.split(“:”)
+            parselimit=parselimit[0]*60+parselimit[1]*1
+        }
+        function beginrefresh(){
+            if (!document.images)
+                return
+            if (parselimit==1)
+                window.location.reload()
+            else{
+                parselimit-=1
+                curmin=Math.floor(parselimit/60)
+                cursec=parselimit%60
+                if (curmin!=0)
+                   curtime=curmin+” minute(s) and “+cursec+” seconds left until page refresh”
+                else
+                   curtime=cursec+” seconds left until page refresh”
+                window.status=curtime
+                setTimeout(“beginrefresh()”,1000)
+            }
+        }
+        window.onload=beginrefresh()
+        </script>
+
     </head>
     <body>
         <header>
@@ -44,14 +77,10 @@
                 <div class="h-left" >
                 <h1><i class="fa fa-cloud" ></i> $station.location</h1>
                 <p>$station.latitude[0]&deg; $station.latitude[1]' $station.latitude[2] | $station.longitude[0]&deg; $station.longitude[1]' $station.longitude[2] | $station.altitude | <a href="https://www.google.com/maps/?q=$station.location" target="_blank" ><i class="fa fa-map-marker" ></i> Show on map</a></p>
-                <h2>Current Weather Conditions</h2>
-                <p><i class="fa fa-clock-o" ></i> $current.dateTime</p>
                 </div>
                 
                 <div class="h-right" >
                     <table>
-                        <tr><td><b>Station:</b></td><td>$station.hardware</td></tr>
-                        <tr><td><b>Software:</b></td><td><a href="http://weewx.com/" target="_blank" >weewx v$station.version</a></td></tr>
                         <tr><td><b>Weewx uptime:</b></td><td>$station.uptime</td></tr>
                         <tr><td><b>Server uptime:</b></td><td>$station.os_uptime</td></tr>
                     </table>
@@ -127,7 +156,7 @@
                         <tr><td>Low Humidity</td><td>$day.outHumidity.min</td><td>$day.outHumidity.mintime</td></tr>
                         <tr><td>High Barometer</td><td>$day.barometer.max</td><td>$day.barometer.maxtime</td></tr>
                         <tr><td>Low Barometer</td><td>$day.barometer.min</td><td>$day.barometer.mintime</td></tr>
-                        <tr><td>Today's Rain</td><td>$day.rain.sum</td><td></td></tr>
+                        <tr><td>Today's Rain</td><td>$day.rain</td><td></td></tr>
                         <tr><td>High Rain Rate</td><td>$day.rainRate.max</td><td>$day.rainRate.maxtime</td></tr>
                         <tr><td>High Wind</td><td>$day.wind.max $day.wind.gustdir</td><td>$day.wind.maxtime</td></tr>
                         <tr><td>Average Wind</td><td>$day.wind.avg</td><td></td></tr>
@@ -153,6 +182,65 @@
                         <tr><td>Low Radiation</td><td>$day.radiation.min</td><td>$day.radiation.mintime</td></tr>
                         #end if
                     </table>
+                </div>
+
+                <div class="card" >
+                    <h1><i class="fa fa-star-o m-rot" ></i> Almanac</h1>
+                    #if $almanac.hasExtras
+                    ## Extended almanac information is available. Do the full set of tables.
+                    #set $sun_altitude = $almanac.sun.alt
+                    #if $sun_altitude < 0
+                    #set $sun_None="<i>(Always down)</i>"
+                    #else
+                    #set $sun_None="<i>(Always up)</i>"
+                    #end if
+                    <h3>Sun</h3>
+                    <table>
+                            <tr><td>Start civil twilight:</td><td>$almanac(horizon=-6).sun(use_center=1).rise</td></tr>
+                            <tr><td>Sunrise</td><td>$almanac.sun.rise.string($sun_None)</td></tr>
+                            <tr><td>Transit:</td><td>$almanac.sun.transit</td></tr>
+                            <tr><td>Sunset:</td><td>$almanac.sun.set.string($sun_None)</td></tr>
+                            <tr><td>End civil twilight:</td><td>$almanac(horizon=-6).sun(use_center=1).set</td></tr>
+                            <tr><td>Azimuth:</td><td>$("%.1f&deg;" % $almanac.sun.az)</td></tr>
+                            <tr><td>Altitude:</td><td>$("%.1f&deg;" % $sun_altitude)</td></tr>
+                            <tr><td>Right ascension:</td><td>$("%.1f&deg;" % $almanac.sun.ra)</td></tr>
+                            <tr><td>Declination:</td><td>$("%.1f&deg;" % $almanac.sun.dec)</td></tr>
+                            #if $almanac.next_equinox.raw < $almanac.next_solstice.raw
+                            ## The equinox is before the solstice. Display them in order.
+                            <tr><td>Equinox:</td><td>$almanac.next_equinox</td></tr>
+                            <tr><td>Solstice:</td><td>$almanac.next_solstice</td></tr>
+                            #else
+                            ## The solstice is before the equinox. Display them in order.
+                            <tr><td>Solstice:</td><td>$almanac.next_solstice</td></tr>
+                            <tr><td>Equinox:</td><td>$almanac.next_equinox</td></tr>
+                            #end if
+                    </table>
+                    <h3>Moon</h3>
+                    <table>
+                            <tr><td>Rise:</td><td>$almanac.moon.rise</td></tr>
+                            <tr><td>Transit:</td><td>$almanac.moon.transit</td></tr>
+                            <tr><td>Set:</td><td>$almanac.moon.set</td></tr>
+                            <tr><td>Azimuth:</td><td>$("%.1f&deg;" % $almanac.moon.az)</td></tr>
+                            <tr><td>Altitude:</td><td>$("%.1f&deg;" % $almanac.moon.alt)</td></tr>
+                            <tr><td>Right ascension:</td><td>$("%.1f&deg;" % $almanac.moon.ra)</td></tr>
+                            <tr><td>Declination:</td><td>$("%.1f&deg;" % $almanac.moon.dec)</td></tr>
+                            #if $almanac.next_full_moon.raw < $almanac.next_new_moon.raw
+                            <tr><td>Full moon:</td><td>$almanac.next_full_moon</td></tr>
+                            <tr><td>New moon:</td><td>$almanac.next_new_moon</td></tr>
+                            #else
+                            <tr><td>New moon:</td><td>$almanac.next_new_moon</td></tr>
+                            <tr><td>Full moon:</td><td>$almanac.next_full_moon</td></tr>
+                            #end if
+                            <tr><td>Phase:</td><td>$almanac.moon_phase<br />($almanac.moon_fullness% full)</td></tr>
+                    </table>
+                    #else
+                    ## No extended almanac information available. Fall back to a simple table.
+                    <table>
+                        <tr><td>Sunrise:</td><td>$almanac.sunrise</td></tr>
+                        <tr><td>Sunset:</td><td>$almanac.sunset</td></tr>
+                        <tr><td>Moon Phase:</td><td>$almanac.moon_phase<br/>($almanac.moon_fullness% full)</td></tr>
+                    </table>
+                    #end if
                 </div>
                 
                 #if $Extras.has_key('radar_img')
@@ -211,75 +299,12 @@
             
             <div class="right" >
 
-                <div class="card" >
-                    <h1><i class="fa fa-star-o m-rot" ></i> Almanac</h1>
-                    #if $almanac.hasExtras
-                    ## Extended almanac information is available. Do the full set of tables.
-                    #set $sun_altitude = $almanac.sun.alt
-                    #if $sun_altitude < 0
-                    #set $sun_None="<i>(Always down)</i>"
-                    #else
-                    #set $sun_None="<i>(Always up)</i>"
-                    #end if
-                    <div class="haelfte" >
-                        <h3>Sun</h3>
-                        <table>
-                            <tr><td>Start civil twilight:</td><td>$almanac(horizon=-6).sun(use_center=1).rise</td></tr>
-                            <tr><td>Sunrise</td><td>$almanac.sun.rise.string($sun_None)</td></tr>
-                            <tr><td>Transit:</td><td>$almanac.sun.transit</td></tr>
-                            <tr><td>Sunset:</td><td>$almanac.sun.set.string($sun_None)</td></tr>
-                            <tr><td>End civil twilight:</td><td>$almanac(horizon=-6).sun(use_center=1).set</td></tr>
-                            <tr><td>Azimuth:</td><td>$("%.1f&deg;" % $almanac.sun.az)</td></tr>
-                            <tr><td>Altitude:</td><td>$("%.1f&deg;" % $sun_altitude)</td></tr>
-                            <tr><td>Right ascension:</td><td>$("%.1f&deg;" % $almanac.sun.ra)</td></tr>
-                            <tr><td>Declination:</td><td>$("%.1f&deg;" % $almanac.sun.dec)</td></tr>
-                            #if $almanac.next_equinox.raw < $almanac.next_solstice.raw
-                            ## The equinox is before the solstice. Display them in order.
-                            <tr><td>Equinox:</td><td>$almanac.next_equinox</td></tr>
-                            <tr><td>Solstice:</td><td>$almanac.next_solstice</td></tr>
-                            #else
-                            ## The solstice is before the equinox. Display them in order.
-                            <tr><td>Solstice:</td><td>$almanac.next_solstice</td></tr>
-                            <tr><td>Equinox:</td><td>$almanac.next_equinox</td></tr>
-                            #end if
-                        </table>
-                    </div>
-                    <div class="haelfte" >
-                        <h3>Moon</h3>
-                        <table>
-                            <tr><td>Rise:</td><td>$almanac.moon.rise</td></tr>
-                            <tr><td>Transit:</td><td>$almanac.moon.transit</td></tr>
-                            <tr><td>Set:</td><td>$almanac.moon.set</td></tr>
-                            <tr><td>Azimuth:</td><td>$("%.1f&deg;" % $almanac.moon.az)</td></tr>
-                            <tr><td>Altitude:</td><td>$("%.1f&deg;" % $almanac.moon.alt)</td></tr>
-                            <tr><td>Right ascension:</td><td>$("%.1f&deg;" % $almanac.moon.ra)</td></tr>
-                            <tr><td>Declination:</td><td>$("%.1f&deg;" % $almanac.moon.dec)</td></tr>
-                            #if $almanac.next_full_moon.raw < $almanac.next_new_moon.raw
-                            <tr><td>Full moon:</td><td>$almanac.next_full_moon</td></tr>
-                            <tr><td>New moon:</td><td>$almanac.next_new_moon</td></tr>
-                            #else
-                            <tr><td>New moon:</td><td>$almanac.next_new_moon</td></tr>
-                            <tr><td>Full moon:</td><td>$almanac.next_full_moon</td></tr>
-                            #end if
-                            <tr><td>Phase:</td><td>$almanac.moon_phase<br />($almanac.moon_fullness% full)</td></tr>
-                        </table>
-                    </div>
-                    #else
-                    ## No extended almanac information available. Fall back to a simple table.
-                    <table>
-                        <tr><td>Sunrise:</td><td>$almanac.sunrise</td></tr>
-                        <tr><td>Sunset:</td><td>$almanac.sunset</td></tr>
-                        <tr><td>Moon Phase:</td><td>$almanac.moon_phase<br/>($almanac.moon_fullness% full)</td></tr>
-                    </table>
-                    #end if
-                </div>
-                
                 <div class="card cc graphs" >
                     <h1><i class="fa fa-line-chart m-gruen" ></i> Graphs</h1>
                     
+                    <img src="dayrain.png" alt="rain" />
                     <img src="daytempdew.png" alt="temperatures" />
                     <img src="daytempchill.png" alt="heatchill" />
-                    <img src="dayrain.png" alt="rain" />
                     <img src="daywind.png" alt="wind" />
                     <img src="daybarometer.png" alt="barometer"/>
                     <img src="daywinddir.png" alt="Hi Wind" />
@@ -298,14 +323,13 @@
                     <img src="daypond.png" alt="Pond Temperatures" />
                     #end if
                 </div>
-                
+
             </div>
         </div>
         </div>
         
         <footer>
             <div class="container-fix" >
-            All rights reserved. &copy; 2014 
             #if $Extras.has_key('you')
             $Extras.you
             #end if

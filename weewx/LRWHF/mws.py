@@ -210,17 +210,66 @@ class Station(object):
           [22]Light level
         """
         data = dict()
-        data['altimeter'] = float(b[2])  # GPS altitude
-        data['windDir'] = float(b[6])  # compass degrees
-        data['windSpeed'] = float(b[7])*3.6*MILE_PER_KM  # mph
-        data['windGust'] = float(b[8])*3.6*MILE_PER_KM  # mph
-        data['windGustDir'] = float(b[9])  # degrees
-        data['inHumidity'] = float(b[14])  # percent
-        data['outTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F #Just to try
-        data['inTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F
-        data['daily_rain'] = float(b[17])*0.03937  # inch
-        data['rain'] = float(b[19])*0.03937/300.0  # avg inch/s in 5 min data
-        data['pressure'] = float(b[20])/100000.0*INHG_PER_MBAR  # inHg
+	if(b[2]!='nan'):
+        	data['altimeter'] = float(b[2])  # GPS altitude
+	else:
+        	data['altimeter'] = -999.0  # GPS altitude
+	if(b[8]!='nan'):
+        	data['windGust'] = float(b[8])*3.6*MILE_PER_KM  # mph
+	else:
+        	data['windGust'] = -999.0  # mph
+	if(b[9]!='nan'):
+        	data['windGustDir'] = float(b[9])  # degrees
+	else:
+        	data['windGustDir'] = -999.0  # degrees
+	if(b[10]!='nan'):
+		data['windSpeed'] = float(b[10])*3.6*MILE_PER_KM  # mph
+	else:
+		data['windSpeed'] = -999.0  # mph
+	if(b[11]!='nan'):
+		data['windDir'] = float(b[11])  # compass degrees
+	else:
+		data['windDir'] = -999.0  # compass degrees
+	if(b[14]!='nan'):
+        	data['inHumidity'] = float(b[14])  # percent
+	else:
+        	data['inHumidity'] = -999.0  # percent	
+	if(b[14]!='nan'):
+        	data['outHumidity'] = float(b[14])  # percent #just to try
+	else:
+        	data['outHumidity'] = -999.0  # percent #just to try
+	if(b[15]!='nan'):
+        	data['outTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F #Just to try
+	else:
+        	data['outTemp'] = -999.0  # degree_F #Just to try
+	if(b[15]!='nan'):
+        	data['inTemp'] = float(b[15])*9.0/5.0+32.0  # degree_F
+	else:
+        	data['inTemp'] = -999.0  # degree_F
+	if(b[16]!='nan'):
+        	data['rainRate'] = float(b[16])*0.03937  # inch/hour
+	else:
+        	data['rainRate'] = -999.0  # inch/hour
+	if(b[17]!='nan'):
+        	data['daily_rain'] = float(b[17])*0.03937  # inch
+	else:
+        	data['daily_rain'] = -999.0  # inch
+	if(b[19]!='nan'):
+        	data['rain'] = float(b[19])*0.03937  # inch reset every 5min
+	else:
+        	data['rain'] = -999.0  # inch reset every 5min (gps!)
+	if(b[20]!='nan'):
+        	data['pressure'] = float(b[20])/100.0*INHG_PER_MBAR # 1000*inHg
+	else:
+        	data['pressure'] = -999.0 # 1000*inHg
+	if(b[20]!='nan'):
+        	data['barometer'] = float(b[20])/100.0*INHG_PER_MBAR # 1000*inHg
+	else:
+        	data['barometer'] = -999.0 # 1000*inHg
+	if(b[21]!='nan'):
+        	data['supplyVoltage'] = float(b[21])  # Voltage
+	else:
+        	data['supplyVoltage'] = -999.0  # Voltage
         if DEBUG_READ:
             logdbg(data)
         return data
