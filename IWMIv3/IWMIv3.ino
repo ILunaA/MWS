@@ -22,6 +22,7 @@
 #include "MPL3115A2.h" //Pressure sensor
 #include "HTU21D.h" //Humidity sensor
 #include <SoftwareSerial.h> //Needed for GPS
+#include "GSM_Module.h" //Needed for SMS/Server upload
 #include <TinyGPS++.h> //GPS parsing
 #include <LiquidCrystal_I2C.h>//16x2 LCD library
 //It requires using fm's LiquidCrystal library replacement:
@@ -33,53 +34,17 @@
 //Some use this PCF8574
 LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
-//this is for RTC
-int clockAddress = 0x68;  // This is the I2C address
-int command = 0;  // This is the command char, in ascii form, sent from the serial port     
-long previousMillis = 0;  // will store last time Temp was updated
-byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+//FOR GSM COMS
+GSM_Module Module(SIM900);// For SIM900 GSM            
+//GSM_Module Module(SM5100B);// For SM5100B GSM
+//SERVER Definitions
+//String HOST      = "lahiruwije.ddns.net";   // Host name or address of the web server
+//int    PORT      = 80;
+String Mobile_No = "+94776141305";          // Mobile Number which the SMS Sends 
+String Test_SMS  = "IWMIMWSv3 Station initializing";    // Test content of the SMS
+int Status;
 
-byte decToBcd(byte val)
-{
-  return ( (val/10*16) + (val%10) );
-}
 
-// Convert binary coded decimal to normal decimal numbers
-byte bcdToDec(byte val)
-{
-  return ( (val/16*10) + (val%16) );
-}
-
-// Gets the date and time from the ds1307 and prints result
-char* getDateDs1307(int flag) {
-  //if flag == 0 : date output
-  //if flag == 1 : time output
-  // Reset the register pointer
-  Wire.beginTransmission(clockAddress);
-  Wire.write(byte(0x00));
-  Wire.endTransmission();
-
-  Wire.requestFrom(clockAddress, 7);
-
-  // A few of these need masks because certain bits are control bits
-  second     = bcdToDec(Wire.read() & 0x7f);
-  minute     = bcdToDec(Wire.read());
-
-  // Need to change this if 12 hour am/pm
-  hour       = bcdToDec(Wire.read() & 0x3f);  
-  dayOfWeek  = bcdToDec(Wire.read());
-  dayOfMonth = bcdToDec(Wire.read());
-  month      = bcdToDec(Wire.read());
-  year       = bcdToDec(Wire.read());
-
-  char sza[32];
-  if (flag==0)
-    sprintf(sza, "%02d-%02d-%02d",year,month,dayOfMonth);
-  if (flag==1)
-    sprintf(sza, "%02d:%02d:%02d",hour,minute,second);
-  return(sza);
-}
-//end of RTC
 
 
 TinyGPSPlus gps;
@@ -284,10 +249,45 @@ void setup()
   delay(1000);
   digitalWrite(STAT2, LOW); //Blink stat LED
   lcd.print("Weather Station online!");
+  
+  //GSM COMS MODULE
+  /*****************************************************************************************************************
+    Initialize the GSM module. 
+  *****************************************************************************************************************/
+  Serial.println("Module Initializing..");
+  Status = Module.Init(9600);
+  if( Status == OK ){
+    Serial.println("Module Ready.");
+  }else{ 
+    Serial.println("Module Initializing Failed."); 
+    Serial.print("ERROR : ");
+    Serial.println(Status);
+    while(1){}; 
+  }
+  Module.Refresh();
+  delay(5000);
+  /*****************************************************************************************************************
+    Finished Initializing the GSM module. 
+  *****************************************************************************************************************/
+  /*****************************************************************************************************************
+    Sending a test SMS 
+  *****************************************************************************************************************/
+  Serial.println("Sending a Test SMS");
+  Status = Module.Send_SMS(Mobile_No, Test_SMS);
+  if( Status == OK ){
+    Serial.println("SMS Sent");
+  }else{
+    Serial.print("SMS ERROR : ");
+    Serial.println(Status);
+  }
+  /*****************************************************************************************************************
+    Finished Sending a test SMS 
+  *****************************************************************************************************************/
 }
 
 void loop()
 {
+
   //Keep track of which minute it is
   loopMSecond = millis() - lastSecond;
   digitalWrite(STAT2, HIGH); //Blink stat LED
