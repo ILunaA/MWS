@@ -254,14 +254,20 @@ void setup()
   /*****************************************************************************************************************
     Initialize the GSM module. 
   *****************************************************************************************************************/
-  Serial.println("Module Initializing..");
+  lcd.clear();
+  lcd.print(F("Module Initializing.."));
   Status = Module.Init(9600);
   if( Status == OK ){
-    Serial.println("Module Ready.");
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Ready."));
   }else{ 
-    Serial.println("Module Initializing Failed."); 
-    Serial.print("ERROR : ");
-    Serial.println(Status);
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Initializing Failed.")); 
+    delay(1000);
+    lcd.clear();
+    lcd.print(F("ERROR : "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
     while(1){}; 
   }
   Module.Refresh();
@@ -272,13 +278,17 @@ void setup()
   /*****************************************************************************************************************
     Sending a test SMS 
   *****************************************************************************************************************/
-  Serial.println("Sending a Test SMS");
+  lcd.clear();
+  lcd.print(F("Sending a Test SMS"));
   Status = Module.Send_SMS(Mobile_No, Test_SMS);
   if( Status == OK ){
-    Serial.println("SMS Sent");
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent"));
   }else{
-    Serial.print("SMS ERROR : ");
-    Serial.println(Status);
+    lcd.clear();
+    lcd.print(F("SMS ERROR : "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
   }
   /*****************************************************************************************************************
     Finished Sending a test SMS 
