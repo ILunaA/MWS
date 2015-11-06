@@ -37,15 +37,17 @@ LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 //FOR GSM COMS
 GSM_Module Module(SIM900);// For SIM900 GSM            
 //GSM_Module Module(SM5100B);// For SM5100B GSM
-//SERVER Definitions
-//String HOST      = "lahiruwije.ddns.net";   // Host name or address of the web server
-//int    PORT      = 80;
-String Mobile_No = "+94776141305";          // Mobile Number which the SMS Sends 
+String Mobile_No1 = "+94776141305";          // Mobile Number 1 which the SMS Sends 
+String Mobile_No2 = "+94776141305";          // Mobile Number 2 which the SMS Sends 
+String Mobile_No3 = "+94776141305";          // Mobile Number 3 which the SMS Sends 
+String Mobile_No4 = "+94776141305";          // Mobile Number 4 which the SMS Sends 
+String Mobile_No5 = "+94776141305";          // Mobile Number 5 which the SMS Sends 
 String Test_SMS  = "IWMIMWSv3 Station initializing";    // Test content of the SMS
 int Status;
-
-
-
+//PhP SERVER Definitions
+//String HOST      = "lahiruwije.ddns.net";   // Host name or address of the web server
+//int    PORT      = 80;
+//END OF GSM COMS
 
 TinyGPSPlus gps;
 
@@ -280,7 +282,11 @@ void setup()
   *****************************************************************************************************************/
   lcd.clear();
   lcd.print(F("Sending a Test SMS"));
-  Status = Module.Send_SMS(Mobile_No, Test_SMS);
+  Status = Module.Send_SMS(Mobile_No1, Test_SMS);
+  Status = Module.Send_SMS(Mobile_No2, Test_SMS);
+  Status = Module.Send_SMS(Mobile_No3, Test_SMS);
+  Status = Module.Send_SMS(Mobile_No4, Test_SMS);
+  Status = Module.Send_SMS(Mobile_No5, Test_SMS);
   if( Status == OK ){
     lcd.setCursor(0, 2);
     lcd.print(F("SMS Sent"));
@@ -329,7 +335,16 @@ void loop()
   seconds += loopMSecond/1000;
   if(++seconds > 59) seconds = 0;
   minutes += seconds/60;
-  if(++minutes > 59) minutes = 0;
+  if(++minutes > 59) {
+    minutes = 0;
+    //SMS Alert if hourly rain > 25 mm/h
+    if(rainin > 25.0){
+      sendSMS();
+    }
+    //Hourly online reporting
+    //Send temperature&humidity to PhP Server (to be enhanced)
+    //send2Server();
+  }
   minutes_5m += seconds/60;
   if(++minutes_5m > 4){
     minutes_5m = 0;
@@ -347,6 +362,8 @@ void loop()
 
   //Report all readings
   printWeather();
+  //Send SMS alert
+  //sendSMS();
   //Turn off stat LED
   digitalWrite(STAT2, LOW); 
   //Wait 1 second, and gather GPS data
@@ -658,6 +675,110 @@ void printWeather()
 
 }
 
+void sendSMS()
+{
+  /*****************************************************************************************************************
+    Sending an alert SMS 
+  *****************************************************************************************************************/
+  lcd.clear();
+  char sz[128];
+  sprintf(sz, "%.6f,%.6f,%02d-%02d-%02d,%02d:%02d:%02d,%.3f mm/h",gps.location.lng(),gps.location.lat(),gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second(),rainin);//[4]
+ 
+  lcd.print(F("Sending an alert SMS (long,lat,date,time,hourly rainfall"));
+  Status = Module.Send_SMS(Mobile_No1, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No1"));
+  }else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No1: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
+  Status = Module.Send_SMS(Mobile_No2, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No2"));
+  }else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No2: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
+  Status = Module.Send_SMS(Mobile_No3, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No3"));
+  }else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No3: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
+  Status = Module.Send_SMS(Mobile_No4, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No4"));
+  }else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No4: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
+  Status = Module.Send_SMS(Mobile_No5, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No5"));
+  }else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No5: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
+  /*****************************************************************************************************************
+    Finished Sending an alert SMS 
+  *****************************************************************************************************************/
 
+
+  
+}
+
+//void send2Server(){
+///*****************************************************************************************************************
+//    Connecting to the Server and Sending Data 
+//*****************************************************************************************************************/
+//  Serial.println("Connecting to Server");
+//  
+//  Status = Module.POST_Data(HOST, PORT, myPressure.readTemp(), myHumidity.readHumidity());
+//  
+//  if( Status == OK ){
+//  
+//    Serial.print("Connecting Successful");
+//    Serial.print("    ");
+//    Serial.println(Module.Received_String());
+//    
+//  }else{
+//    
+//    Serial.print("TCP ERROR Code : ");
+//    Serial.print(Status);
+//    Serial.print("    ");
+//    Serial.println(Module.Received_String());
+//    
+//  }
+//  
+//// Listen to the Module print received data.   
+//  
+//  while(1){
+//  
+//    do{
+//      
+//        Module.Wait(1000);
+//      
+//      }while(!Module.String_Received());
+//      
+//      Serial.println(Module.Received_String());
+//  
+//  };  
+//}
 
 
