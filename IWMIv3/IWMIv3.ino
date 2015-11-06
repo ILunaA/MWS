@@ -37,11 +37,11 @@ LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 //FOR GSM COMS
 GSM_Module Module(SIM900);// For SIM900 GSM            
 //GSM_Module Module(SM5100B);// For SM5100B GSM
-String Mobile_No1 = "+94776141305";          // Mobile Number 1 which the SMS Sends 
-String Mobile_No2 = "+94776141305";          // Mobile Number 2 which the SMS Sends 
-String Mobile_No3 = "+94776141305";          // Mobile Number 3 which the SMS Sends 
-String Mobile_No4 = "+94776141305";          // Mobile Number 4 which the SMS Sends 
-String Mobile_No5 = "+94776141305";          // Mobile Number 5 which the SMS Sends 
+String Mobile_No1 = "+94773709854";          // S. Mobile Number 1 which the SMS Sends 
+String Mobile_No2 = "+94778351854";          // R. Mobile Number 2 which the SMS Sends 
+String Mobile_No3 = "+94776141305";          // L. Mobile Number 3 which the SMS Sends 
+//String Mobile_No4 = "+94776141305";          // Mobile Number 4 which the SMS Sends 
+//String Mobile_No5 = "+94776141305";          // Mobile Number 5 which the SMS Sends 
 String Test_SMS  = "IWMIMWSv3 Station initializing";    // Test content of the SMS
 int Status;
 //PhP SERVER Definitions
@@ -285,8 +285,8 @@ void setup()
   Status = Module.Send_SMS(Mobile_No1, Test_SMS);
   Status = Module.Send_SMS(Mobile_No2, Test_SMS);
   Status = Module.Send_SMS(Mobile_No3, Test_SMS);
-  Status = Module.Send_SMS(Mobile_No4, Test_SMS);
-  Status = Module.Send_SMS(Mobile_No5, Test_SMS);
+  //Status = Module.Send_SMS(Mobile_No4, Test_SMS);
+  //Status = Module.Send_SMS(Mobile_No5, Test_SMS);
   if( Status == OK ){
     lcd.setCursor(0, 2);
     lcd.print(F("SMS Sent"));
@@ -715,26 +715,26 @@ void sendSMS()
     lcd.setCursor(0, 2);
     lcd.print(Status);
   }
-  Status = Module.Send_SMS(Mobile_No4, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No4"));
-  }else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No4: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
-  Status = Module.Send_SMS(Mobile_No5, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No5"));
-  }else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No5: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
+//  Status = Module.Send_SMS(Mobile_No4, sz);
+//  if( Status == OK ){
+//    lcd.setCursor(0, 2);
+//    lcd.print(F("SMS Sent to No4"));
+//  }else{
+//    lcd.clear();
+//    lcd.print(F("SMS ERROR to No4: "));
+//    lcd.setCursor(0, 2);
+//    lcd.print(Status);
+//  }
+//  Status = Module.Send_SMS(Mobile_No5, sz);
+//  if( Status == OK ){
+//    lcd.setCursor(0, 2);
+//    lcd.print(F("SMS Sent to No5"));
+//  }else{
+//    lcd.clear();
+//    lcd.print(F("SMS ERROR to No5: "));
+//    lcd.setCursor(0, 2);
+//    lcd.print(Status);
+//  }
   /*****************************************************************************************************************
     Finished Sending an alert SMS 
   *****************************************************************************************************************/
