@@ -1,7 +1,7 @@
 //SD card
 //http://blog.oscarliang.net/sd-card-arduino/
-#include <SD.h>
-File sd;
+//#include <SD.h>
+//File sd;
 
 //Gyro/compass SDA=A4 SCL=A5
 //Removed as BMP180 sensor already uses the pins
@@ -38,8 +38,19 @@ Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
 dht11 DHT11;
 #define DHT11PIN 6
 
-#include <LiquidCrystal.h>
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+// Get the LCD I2C Library here: 
+// https://bitbucket.org/fmalpartida/new-liquidcrystal/downloads
+// Move any other LCD libraries to another folder or delete them
+// See Library "Docs" folder for possible commands etc.
+#include <LiquidCrystal_I2C.h>
+/*-----( Declare Constants )-----*/
+/*-----( Declare objects )-----*/
+// set the LCD address to 0x27 for a 20 chars 4 line display
+// Set the pins on the I2C chip used for LCD connections:
+//                    addr, en,rw,rs,d4,d5,d6,d7,bl,blpol
+LiquidCrystal_I2C lcd(0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
+
+
 
 void setup()
 {
@@ -54,17 +65,28 @@ void setup()
   //Start the BMP180 Pressure sensor
   bmp.begin();
   // set up the LCD's number of columns and rows:
-  lcd.begin(16, 2);
+  lcd.begin(20, 4);
   // Print a message to the LCD.
-  lcd.print("IWMI MWS v3");
-  lcd.setCursor(0, 1);
+  // ------- Quick 3 blinks of backlight  -------------
+  for(int i = 0; i< 3; i++)
+  {
+    lcd.backlight();
+    delay(250);
+    lcd.noBacklight();
+    delay(250);
+  }
+  lcd.backlight(); // finish with backlight on  
+
+  lcd.setCursor(0, 0);
+  lcd.print("MWS v3");
+  lcd.setCursor(0, 2);
   lcd.print("Starting Sensors");
   delay(2000);
 }
 
 void loop()
 {
-  sd = SD.open("test.txt", FILE_WRITE);
+  //sd = SD.open("test.txt", FILE_WRITE);
   //Gyro/Compass
   //MagnetometerRaw raw = compass.ReadRawAxis();
   //MagnetometerScaled scaled = compass.ReadScaledAxis();
@@ -113,17 +135,22 @@ void loop()
   float dallasT = sensors.getTempCByIndex(0);// Why "byIndex"? 
   // You can have more than one IC on the same bus. 
   // 0 refers to the first IC on the wire 
-  Serial.print("Temperature D12B80 (C): ");
+  Serial.print("Temperature DS12B80 (C): ");
   Serial.println(dallasT); 
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Temperature D12B80 ");
+  lcd.print("Temperature DS12B80 ");
   lcd.setCursor(0, 1);
   lcd.print(dallasT);
   lcd.print(" C");
-  sd.print(dallasT);
-  sd.print(",");
-  delay(2000);
+  //sd.print(dallasT);
+  //sd.print(",");
+  lcd.setCursor(0, 2);
+  lcd.print("              DHT11 ");
+  lcd.setCursor(0, 3);
+  lcd.print((float)DHT11.temperature, 2);
+  lcd.print(" C");
+  delay(3000);
 
   // Read Light Sensor
   //1023/2=511 = night = 1KOhms (equal to paired resistor)
@@ -131,9 +158,9 @@ void loop()
   lcd.setCursor(0, 0);
   lcd.print("Light Sensor ");
   lcd.setCursor(0, 1);
-  lcd.print((float) analogRead(lightPin)/511.0*1000);
+  float vout=analogRead(lightPin)*0.0048828125;
+  lcd.print((int) 500/(10.0*((5.0-vout)/vout)));
   lcd.print(" Ohms");
-  delay(2000);
 
   /* Get a new sensor event */
   sensors_event_t event;
@@ -144,15 +171,14 @@ void loop()
     /* Display atmospheric pressure in hPa */
     Serial.print("Pressure (hPa): "); 
     Serial.println(event.pressure); 
-    lcd.clear();
-    lcd.setCursor(0, 0);
+    lcd.setCursor(0, 2);
     lcd.print("Pressure ");
-    lcd.setCursor(0, 1);
+    lcd.setCursor(0, 3);
     lcd.print(event.pressure);
     lcd.print(" hPa");
-    sd.print(event.pressure);
-    sd.print(",");
-    delay(2000);
+    //sd.print(event.pressure);
+    //sd.print(",");
+    delay(3000);
   }
   else
   {
@@ -188,40 +214,30 @@ void loop()
   lcd.setCursor(0, 1);
   lcd.print((float)DHT11.humidity,2);
   lcd.print(" %");
-  sd.print((float)DHT11.humidity,2);
-  sd.print(",");
-  delay(2000);
-  Serial.print("Temperature (C): ");
+  //sd.print((float)DHT11.humidity,2);
+  //sd.print(",");
+  delay(3000);
+  Serial.print("Temperature DHT: ");
   Serial.println((float)DHT11.temperature, 2);
-  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Temperature ");
   lcd.setCursor(0, 1);
   lcd.print((float)DHT11.temperature, 2);
   lcd.print(" C");
-  sd.print((float)DHT11.temperature, 2);
-  sd.print(",");
-  delay(2000);
-
+  //sd.print((float)DHT11.temperature, 2);
+  //sd.print(",");
   Serial.print("Temperature (F): ");
   Serial.println(Fahrenheit(DHT11.temperature), 2);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Temperature ");
-  lcd.setCursor(0, 1);
+  lcd.setCursor(0, 2);
   lcd.print(Fahrenheit(DHT11.temperature), 2);
   lcd.print(" F");
-  delay(2000);
   Serial.print("Temperature (K): ");
   Serial.println(Kelvin(DHT11.temperature), 2);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Temperature ");
-  lcd.setCursor(0, 1);
+  lcd.setCursor(0, 3);
   lcd.print(Kelvin(DHT11.temperature), 2);
   lcd.print(" K");
   //lcd.print("hello, world!");
-  delay(2000);
+  delay(3000);
   Serial.print("Dew Point (C): ");
   Serial.println(dewPoint(DHT11.temperature, DHT11.humidity));
   lcd.clear();
@@ -231,22 +247,20 @@ void loop()
   lcd.print(dewPoint(DHT11.temperature, DHT11.humidity));
   lcd.print(" C");
   //lcd.print("hello, world!");
-  delay(2000);
   Serial.print("Dew PointFast (C): ");
   Serial.println(dewPointFast(DHT11.temperature, DHT11.humidity));
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Dew Point (Fast)");
-  lcd.setCursor(0, 1);
+  lcd.setCursor(0, 2);
+  lcd.print("Fast code");
+  lcd.setCursor(0, 3);
   lcd.print(dewPointFast(DHT11.temperature, DHT11.humidity));
   lcd.print(" C");
 
   //close SD card file
-  sd.print("\n");
-  sd.close();
+  //sd.print("\n");
+  //sd.close();
 
-  delay(2000);
-  
+  delay(3000);
+
 }
 
 
@@ -315,6 +329,7 @@ double dewPointFast(double celsius, double humidity)
   double Td = (b * temp) / (a - temp);
   return Td;
 }
+
 
 
 
