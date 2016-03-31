@@ -1,0 +1,6 @@
+{
+  "name": "Mobile Weather Station",
+  "tagline": "Arduino code for a Mobile Weather Station",
+  "body": "Low-cost mobile weather stations are designed to help us monitor the weather more closely. We’re trialing the devices in Sri Lanka, and other continents where they could help rural communities better prepare for floods and landslides. All of the work featured here is open source. You can copy the weather station designs or modify them and build your own version.",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
