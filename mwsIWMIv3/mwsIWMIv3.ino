@@ -30,19 +30,19 @@
 
 //This is for the 16x2 LCD
 //Most of them are using this
-//LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 //Some use this PCF8574
-LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+//LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 //FOR GSM COMS
 GSM_Module Module(SIM900);// For SIM900 GSM            
 //GSM_Module Module(SM5100B);// For SM5100B GSM
 String Mobile_No1 = "+94773709854";          // S. Mobile Number 1 which the SMS Sends 
-String Mobile_No2 = "+94778351854";          // R. Mobile Number 2 which the SMS Sends 
+String Mobile_No2 = "+94767201637";          // Y. Mobile Number 2 which the SMS Sends (temporary, plz remove) 
 String Mobile_No3 = "+94776141305";          // L. Mobile Number 3 which the SMS Sends 
 //String Mobile_No4 = "+94776141305";          // Mobile Number 4 which the SMS Sends 
 //String Mobile_No5 = "+94776141305";          // Mobile Number 5 which the SMS Sends 
-String Test_SMS  = "IWMIMWSv3 Station initializing";    // Test content of the SMS
+String Test_SMS  = "IWMI MWS v3 Station initializing";    // Test content of the SMS
 int Status;
 //PhP SERVER Definitions
 //String HOST      = "lahiruwije.ddns.net";   // Host name or address of the web server
@@ -258,22 +258,22 @@ void setup()
   *****************************************************************************************************************/
   lcd.clear();
   lcd.print(F("Module Initializing.."));
-  Status = Module.Init(9600);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("Module Ready."));
-  }else{ 
-    lcd.setCursor(0, 2);
-    lcd.print(F("Module Initializing Failed.")); 
-    delay(1000);
-    lcd.clear();
-    lcd.print(F("ERROR : "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-    while(1){}; 
-  }
-  Module.Refresh();
-  delay(5000);
+  //Status = Module.Init(9600);
+  //if( Status == OK ){
+  //  lcd.setCursor(0, 2);
+  //  lcd.print(F("Module Ready."));
+  //}else{ 
+  //  lcd.setCursor(0, 2);
+  //  lcd.print(F("Module Initializing Failed.")); 
+  //  delay(1000);
+  //  lcd.clear();
+  //  lcd.print(F("ERROR : "));
+  //  lcd.setCursor(0, 2);
+  //  lcd.print(Status);
+  //  while(1){}; 
+  //}
+  //Module.Refresh();
+  //delay(5000);
   /*****************************************************************************************************************
     Finished Initializing the GSM module. 
   *****************************************************************************************************************/
@@ -282,20 +282,20 @@ void setup()
   *****************************************************************************************************************/
   lcd.clear();
   lcd.print(F("Sending a Test SMS"));
-  Status = Module.Send_SMS(Mobile_No1, Test_SMS);
-  Status = Module.Send_SMS(Mobile_No2, Test_SMS);
-  Status = Module.Send_SMS(Mobile_No3, Test_SMS);
-  //Status = Module.Send_SMS(Mobile_No4, Test_SMS);
-  //Status = Module.Send_SMS(Mobile_No5, Test_SMS);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent"));
-  }else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR : "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
+  //Status = Module.Send_SMS(Mobile_No1, Test_SMS);
+  //Status = Module.Send_SMS(Mobile_No2, Test_SMS);
+  //Status = Module.Send_SMS(Mobile_No3, Test_SMS);
+  ////Status = Module.Send_SMS(Mobile_No4, Test_SMS);
+  ////Status = Module.Send_SMS(Mobile_No5, Test_SMS);
+  //if( Status == OK ){
+  //  lcd.setCursor(0, 2);
+  //  lcd.print(F("SMS Sent"));
+  //}else{
+  //  lcd.clear();
+  //  lcd.print(F("SMS ERROR : "));
+  //  lcd.setCursor(0, 2);
+  //  lcd.print(Status);
+  //}
   /*****************************************************************************************************************
     Finished Sending a test SMS 
   *****************************************************************************************************************/
@@ -339,7 +339,7 @@ void loop()
     minutes = 0;
     //SMS Alert if hourly rain > 25 mm/h
     if(rainin > 25.0){
-      sendSMS();
+      //sendSMS();
     }
     //Hourly online reporting
     //Send temperature&humidity to PhP Server (to be enhanced)
