@@ -3,8 +3,16 @@
 #include <avr/pgmspace.h>
 #include <string.h>
 
-#define Default_RX 10
-#define Default_TX 3
+//UNO gnew board sim 900
+#define Default_RX 10 //for Arduino Mega, so TX for GSM
+#define Default_TX 11
+
+//#define Default_RX 17 //RX2 Arduino Mega
+//#define Default_TX 16 //TX2 Arduino Mega
+//#define Default_RX 18 //RX1 Arduino Mega
+//#define Default_TX 19 //TX1 Arduino Mega
+//#define Default_RX 0 //RX0 Arduino Mega //creates pb at uploading
+//#define Default_TX 1 //TX0 Arduino Mega //creates pb at uploading
 
 class GSM_Module{
     public:

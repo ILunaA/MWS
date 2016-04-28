@@ -37,12 +37,17 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 //FOR GSM COMS
 GSM_Module Module(SIM900);// For SIM900 GSM            
 //GSM_Module Module(SM5100B);// For SM5100B GSM
-String Mobile_No1 = "+94773709854";          // S. Mobile Number 1 which the SMS Sends 
-String Mobile_No2 = "+94767201637";          // Y. Mobile Number 2 which the SMS Sends (temporary, plz remove) 
-String Mobile_No3 = "+94776141305";          // L. Mobile Number 3 which the SMS Sends 
-//String Mobile_No4 = "+94776141305";          // Mobile Number 4 which the SMS Sends 
-//String Mobile_No5 = "+94776141305";          // Mobile Number 5 which the SMS Sends 
-String Test_SMS  = "IWMI MWS v3 Station initializing";    // Test content of the SMS
+String Mobile_No1 = "+94773709854";          // IWMI Soumya Mobile Number 1 which the SMS Sends 
+String Mobile_No2 = "+94713805660";          // IrDep Lasindu Mobile Number 2 which the SMS Sends
+String Mobile_No3 = "+94776141305";          // IWMI Lahiru Mobile Number 3 which the SMS Sends 
+String Mobile_No4 = "+94716890308";          // IrDep Prasanna Mobile Number 4 which the SMS Sends 
+String Mobile_No5 = "+94718025479";          // IrDep Marapana Mobile Number 5 which the SMS Sends 
+String Mobile_No6 = "+94716685855";          // IrDep Karunarathna Mobile Number 6 which the SMS Sends 
+String Mobile_No7 = "+94767201637";          // IWMI Yann Mobile Number 7 which the SMS Sends 
+//String Test_SMS  = "IWMI MWS v3 Station initializing at HOTEL_TEST";    // Test content of the SMS
+//String Test_SMS  = "IWMI MWS v3 Station initializing at UO_LABUNORUWA";    // Test content of the SMS
+//String Test_SMS  = "IWMI MWS v3 Station initializing at UO_MAHAKANADARAWA";    // Test content of the SMS
+String Test_SMS  = "IWMI MWS v3 Station initializing at UO_ATHURUWELLA";    // Test content of the SMS
 int Status;
 //PhP SERVER Definitions
 //String HOST      = "lahiruwije.ddns.net";   // Host name or address of the web server
@@ -68,7 +73,7 @@ const byte WSPEED = 3;
 const byte GPS_PWRCTL = 6; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
 //For Arduino Uno Only
 //const byte STAT1 = 7;
-const byte STAT2 = 8;
+//const byte STAT2 = 8;//Conflicting with reset button of SIM900
 
 // analog I/O pins
 const byte WDIR = A0;
@@ -103,8 +108,10 @@ byte windspdavg[120]; //120 bytes to keep track of 2 minute average
 int winddiravg[120]; //120 ints to keep track of 2 minute average
 float windgust_10m[10]; //10 floats to keep track of 10 minute max
 int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
-volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes of rain
-volatile float rain5min[5]; //5 floating numbers to keep track of 5 minutes of rain
+volatile float rainHour[60]={
+  0.0}; //60 floating numbers to keep track of 60 minutes of rain
+volatile float rain5min[5]={
+  0.0}; //5 floating numbers to keep track of 5 minutes of rain
 
 //These are all the weather values that wunderground expects:
 int winddir = 0; // [0-360 instantaneous wind direction]
@@ -119,7 +126,7 @@ float humidity = 0; // [%]
 float tempf = 0; // [temperature F]
 float rainin = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
 volatile float dailyrainin = 0.0; // [rain inches so far today in local time]
-volatile float rainin5min=0.0; // [rain inches so far last 5 minutes in local time]
+float rainin5min=0.0; // [rain inches so far last 5 minutes in local time]
 //float baromin = 30.03;// [barom in] - It's hard to calculate baromin locally, do this in the agent
 float pressure = 0;
 //float dewptf; // [dewpoint F] - It's hard to calculate dewpoint locally, do this in the agent
@@ -135,9 +142,9 @@ int Rainindi=0;
 
 //Calibrate rain bucket here
 //Rectangle raingauge from Sparkfun.com weather sensors
-//float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
+float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
 //DAVISNET Rain Collector 2
-float rain_bucket_mm = 0.01*25.4;//Each dump is 0.01" of water
+//float rain_bucket_mm = 0.01*25.4;//Each dump is 0.01" of water
 
 // volatiles are subject to modification by IRQs
 volatile unsigned long raintime, rainlast, raininterval, rain, Rainindtime, Rainindlast;
@@ -155,7 +162,7 @@ void rainIRQ()
   raintime = millis(); // grab current time
   raininterval = raintime - rainlast; // calculate interval between this and last event
 
-    if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
+  if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
   {
     dailyrainin += rain_bucket_mm; 
     rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
@@ -191,17 +198,20 @@ void wspeedIRQ()
 
 void setup()
 {
-  //Switch on the GPS
-  pinMode(GPS_PWRCTL, OUTPUT);
-  digitalWrite(GPS_PWRCTL, HIGH); //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
-
-  //Start Serial port reporting
-  Serial.begin(9600);
-
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   lcd.backlight();
   lcd.print("Start MWS");
+
+  //for GSM
+  pinMode(SIM900_Power_Pin, OUTPUT);
+
+  //Start Serial port reporting
+  Serial.begin(9600);
+
+  //Switch on the GPS
+  pinMode(GPS_PWRCTL, OUTPUT);
+  digitalWrite(GPS_PWRCTL, HIGH); //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
 
   //Start software serial for GPS
   //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
@@ -212,7 +222,28 @@ void setup()
 
   //For Arduino UNO Only
   //pinMode(STAT1, OUTPUT); //Status LED Blue
-  pinMode(STAT2, OUTPUT); //Status LED Green
+  //pinMode(STAT2, OUTPUT); //Status LED Green
+
+  pinMode(WSPEED, INPUT_PULLUP); // input from wind meters windspeed sensor
+  pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
+
+  pinMode(REFERENCE_3V3, INPUT);
+  pinMode(LIGHT, INPUT);
+
+  //Switch on the GPS
+  pinMode(GPS_PWRCTL, OUTPUT);
+  digitalWrite(GPS_PWRCTL, HIGH); //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
+
+  //Start software serial for GPS
+  //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
+  ss.begin(9600); 
+  Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
+  Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
+  Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,rainindicate,rain5min,pressure,batt_lvl,light_lvl"));
+
+  //For Arduino UNO Only
+  //pinMode(STAT1, OUTPUT); //Status LED Blue
+  //pinMode(STAT2, OUTPUT); //Status LED Green
 
   pinMode(WSPEED, INPUT_PULLUP); // input from wind meters windspeed sensor
   pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
@@ -238,67 +269,76 @@ void setup()
 
   // turn on interrupts
   interrupts();
-  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
+  //digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
   delay(1000);
-  digitalWrite(STAT2, LOW); //Blink stat LED
+  //digitalWrite(STAT2, LOW); //Blink stat LED
   smartdelay(60000); //Wait 60 seconds, and gather GPS data
   minutes = gps.time.minute();
   minutes_5m = gps.time.minute();
   minutes_10m = gps.time.minute();
   seconds = gps.time.second();
   lastSecond = millis();
-  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
+  //digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
   delay(1000);
-  digitalWrite(STAT2, LOW); //Blink stat LED
+  //digitalWrite(STAT2, LOW); //Blink stat LED
   lcd.print("Weather Station online!");
-  
+
   //GSM COMS MODULE
   /*****************************************************************************************************************
-    Initialize the GSM module. 
-  *****************************************************************************************************************/
+   * Initialize the GSM module. 
+   *****************************************************************************************************************/
   lcd.clear();
   lcd.print(F("Module Initializing.."));
-  //Status = Module.Init(9600);
-  //if( Status == OK ){
-  //  lcd.setCursor(0, 2);
-  //  lcd.print(F("Module Ready."));
-  //}else{ 
-  //  lcd.setCursor(0, 2);
-  //  lcd.print(F("Module Initializing Failed.")); 
-  //  delay(1000);
-  //  lcd.clear();
-  //  lcd.print(F("ERROR : "));
-  //  lcd.setCursor(0, 2);
-  //  lcd.print(Status);
-  //  while(1){}; 
-  //}
-  //Module.Refresh();
-  //delay(5000);
+  //Serial.println();
+  //Serial.println(F("Module Initializing..")); //Debug only to del
+  Status = Module.Init(9600);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Ready."));
+    //Serial.println(F("Module Ready.")); //Debug only to del
+  }
+  else{ 
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Initializing Failed.")); 
+    //Serial.println(F("Module Initializing Failed.")); //Debug only to del
+    delay(1000);
+    lcd.clear();
+    lcd.print(F("ERROR : "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+    while(1){
+    }; 
+  }
+  Module.Refresh();
+  delay(10000);
   /*****************************************************************************************************************
-    Finished Initializing the GSM module. 
-  *****************************************************************************************************************/
+   * Finished Initializing the GSM module. 
+   *****************************************************************************************************************/
   /*****************************************************************************************************************
-    Sending a test SMS 
-  *****************************************************************************************************************/
+   * Sending a test SMS 
+   *****************************************************************************************************************/
   lcd.clear();
   lcd.print(F("Sending a Test SMS"));
-  //Status = Module.Send_SMS(Mobile_No1, Test_SMS);
-  //Status = Module.Send_SMS(Mobile_No2, Test_SMS);
-  //Status = Module.Send_SMS(Mobile_No3, Test_SMS);
-  ////Status = Module.Send_SMS(Mobile_No4, Test_SMS);
-  ////Status = Module.Send_SMS(Mobile_No5, Test_SMS);
-  //if( Status == OK ){
-  //  lcd.setCursor(0, 2);
-  //  lcd.print(F("SMS Sent"));
-  //}else{
-  //  lcd.clear();
-  //  lcd.print(F("SMS ERROR : "));
-  //  lcd.setCursor(0, 2);
-  //  lcd.print(Status);
-  //}
+  Status = Module.Send_SMS(Mobile_No1, Test_SMS);//Soumya
+  Status = Module.Send_SMS(Mobile_No2, Test_SMS);//Lasindu
+  Status = Module.Send_SMS(Mobile_No3, Test_SMS);//Lahiru
+  Status = Module.Send_SMS(Mobile_No4, Test_SMS);//Prasanna
+  Status = Module.Send_SMS(Mobile_No5, Test_SMS);//Maradana
+  Status = Module.Send_SMS(Mobile_No6, Test_SMS);//Karunarathna
+  Status = Module.Send_SMS(Mobile_No7, Test_SMS);//Yann
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent"));
+  }
+  else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR : "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
   /*****************************************************************************************************************
-    Finished Sending a test SMS 
-  *****************************************************************************************************************/
+   * Finished Sending a test SMS 
+   *****************************************************************************************************************/
 }
 
 void loop()
@@ -306,7 +346,7 @@ void loop()
 
   //Keep track of which minute it is
   loopMSecond = millis() - lastSecond;
-  digitalWrite(STAT2, HIGH); //Blink stat LED
+  //digitalWrite(STAT2, HIGH); //Blink stat LED
   lastSecond = millis();
 
   //Take a speed and direction reading every second for 2 minute average
@@ -337,9 +377,10 @@ void loop()
   minutes += seconds/60;
   if(++minutes > 59) {
     minutes = 0;
-    //SMS Alert if hourly rain > 25 mm/h
-    if(rainin > 25.0){
-      //sendSMS();
+    //SMS Alert if hourly rain > 10 mm/h
+    //Modified after Lasindu's request 22 April 2016
+    if(rainin > 10.0){
+      sendSMS();
     }
     //Hourly online reporting
     //Send temperature&humidity to PhP Server (to be enhanced)
@@ -349,6 +390,8 @@ void loop()
   if(++minutes_5m > 4){
     minutes_5m = 0;
     for (i=0;i<5;i++) rain5min[i] = 0;
+    //Report all readings
+    printWeather();
   }
   minutes_10m += seconds/60;
   if(++minutes_10m > 9){
@@ -360,12 +403,11 @@ void loop()
   rain5min[minutes_5m] = 0; //Zero out this minute's rain
   windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
 
-  //Report all readings
-  printWeather();
-  //Send SMS alert
-  //sendSMS();
+  if(gps.time.hour()==3 && minutes==30)
+    sendDailyRainSMS();
+
   //Turn off stat LED
-  digitalWrite(STAT2, LOW); 
+  //digitalWrite(STAT2, LOW); 
   //Wait 1 second, and gather GPS data
   smartdelay(800); 
 }
@@ -678,18 +720,55 @@ void printWeather()
 void sendSMS()
 {
   /*****************************************************************************************************************
-    Sending an alert SMS 
-  *****************************************************************************************************************/
+   * Sending an alert SMS 
+   *****************************************************************************************************************/
   lcd.clear();
   char sz[128];
-  sprintf(sz, "%.6f,%.6f,%02d-%02d-%02d,%02d:%02d:%02d,%.3f mm/h",gps.location.lng(),gps.location.lat(),gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second(),rainin);//[4]
- 
+  char rainbuf[128];
+  //Calculate amount of rainfall for the last 60 minutes
+  rainin = 0;  
+  for(int i = 0 ; i < 60 ; i++)
+    rainin += rainHour[i];
+  //Wait 1 second, and gather GPS data
+  smartdelay(800); 
+  dtostrf(rainin, 3, 2, rainbuf);
+  //sprintf(sz, "HOTEL_TEST\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\nxxx mm/h",gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second());//[4]
+  //  sprintf(sz, "UO_LABUNORUWA\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\n%.3f mm/h",gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second(),rainin);//[4]
+  //  sprintf(sz, "UO_MAHAKANADARAWA\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\n%.3f mm/h",gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second(),rainin);//[4]
+  sprintf(sz, "UO_ATHURUWELLA\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\n%s mm/h",gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second(),rainbuf);//[4]
+  //Serial.println(sz);
+  lcd.clear();
+  lcd.print(F("Module Initializing.."));
+  //Serial.println();
+  //Serial.println(F("Module Initializing..")); //Debug only to del
+  Status = Module.Init(9600);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Ready."));
+    //Serial.println(F("Module Ready.")); //Debug only to del
+  }
+  else{ 
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Initializing Failed.")); 
+    //Serial.println(F("Module Initializing Failed.")); //Debug only to del
+    delay(1000);
+    lcd.clear();
+    lcd.print(F("ERROR : "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+    while(1){
+    }; 
+  }
+  Module.Refresh();
+  delay(10000);
+
   lcd.print(F("Sending an alert SMS (long,lat,date,time,hourly rainfall"));
   Status = Module.Send_SMS(Mobile_No1, sz);
   if( Status == OK ){
     lcd.setCursor(0, 2);
     lcd.print(F("SMS Sent to No1"));
-  }else{
+  }
+  else{
     lcd.clear();
     lcd.print(F("SMS ERROR to No1: "));
     lcd.setCursor(0, 2);
@@ -699,7 +778,8 @@ void sendSMS()
   if( Status == OK ){
     lcd.setCursor(0, 2);
     lcd.print(F("SMS Sent to No2"));
-  }else{
+  }
+  else{
     lcd.clear();
     lcd.print(F("SMS ERROR to No2: "));
     lcd.setCursor(0, 2);
@@ -709,38 +789,113 @@ void sendSMS()
   if( Status == OK ){
     lcd.setCursor(0, 2);
     lcd.print(F("SMS Sent to No3"));
-  }else{
+  }
+  else{
     lcd.clear();
     lcd.print(F("SMS ERROR to No3: "));
     lcd.setCursor(0, 2);
     lcd.print(Status);
   }
-//  Status = Module.Send_SMS(Mobile_No4, sz);
-//  if( Status == OK ){
-//    lcd.setCursor(0, 2);
-//    lcd.print(F("SMS Sent to No4"));
-//  }else{
-//    lcd.clear();
-//    lcd.print(F("SMS ERROR to No4: "));
-//    lcd.setCursor(0, 2);
-//    lcd.print(Status);
-//  }
-//  Status = Module.Send_SMS(Mobile_No5, sz);
-//  if( Status == OK ){
-//    lcd.setCursor(0, 2);
-//    lcd.print(F("SMS Sent to No5"));
-//  }else{
-//    lcd.clear();
-//    lcd.print(F("SMS ERROR to No5: "));
-//    lcd.setCursor(0, 2);
-//    lcd.print(Status);
-//  }
+  Status = Module.Send_SMS(Mobile_No4, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No4"));
+  }
+  else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No4: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
+  Status = Module.Send_SMS(Mobile_No5, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No5"));
+  }
+  else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No5: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
+  Status = Module.Send_SMS(Mobile_No6, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No6"));
+  }
+  else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No6: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
+  Status = Module.Send_SMS(Mobile_No7, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No7"));
+  }
+  else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No7: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
   /*****************************************************************************************************************
-    Finished Sending an alert SMS 
-  *****************************************************************************************************************/
+   * Finished Sending an alert SMS 
+   *****************************************************************************************************************/
+}
 
+void sendDailyRainSMS()
+{
+  /*****************************************************************************************************************
+   * Sending an alert SMS 
+   *****************************************************************************************************************/
+  lcd.clear();
+  char sz[128];
+  char rainbuf[128];
+  dailyrainin=0.0;
+  dtostrf(dailyrainin, 3, 2, rainbuf);
+  //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
+  //sprintf(sz, "UO_LABUNORUWA\n%s mm/d",rainbuf);//[4]
+  //sprintf(sz, "UO_MAHAKANADARAWA\n%s mm/d",rainbuf);//[4]
+  sprintf(sz, "UO_ATHURUWELLA\n%s mm/d",rainbuf);//[4]
+  lcd.clear();
+  lcd.print(F("Module Initializing.."));
+  //Serial.println();
+  //Serial.println(F("Module Initializing..")); //Debug only to del
+  Status = Module.Init(9600);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Ready."));
+    //Serial.println(F("Module Ready.")); //Debug only to del
+  }
+  else{ 
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Initializing Failed.")); 
+    //Serial.println(F("Module Initializing Failed.")); //Debug only to del
+    delay(1000);
+    lcd.clear();
+    lcd.print(F("ERROR : "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+    while(1){
+    }; 
+  }
+  Module.Refresh();
+  delay(10000);
 
-  
+  lcd.print(F("Sending an alert SMS (long,lat,date,time,hourly rainfall"));
+  Status = Module.Send_SMS(Mobile_No3, sz);
+  if( Status == OK ){
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent to No3"));
+  }
+  else{
+    lcd.clear();
+    lcd.print(F("SMS ERROR to No3: "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+  }
 }
 
 //void send2Server(){
@@ -780,5 +935,12 @@ void sendSMS()
 //  
 //  };  
 //}
+
+
+
+
+
+
+
 
 
