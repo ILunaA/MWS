@@ -46,8 +46,10 @@ String Mobile_No6 = "+94716685855";          // IrDep Karunarathna Mobile Number
 String Mobile_No7 = "+94767201637";          // IWMI Yann Mobile Number 7 which the SMS Sends 
 //String Test_SMS  = "IWMI MWS v3 Station initializing at HOTEL_TEST";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at UO_LABUNORUWA";    // Test content of the SMS
-//String Test_SMS  = "IWMI MWS v3 Station initializing at UO_MAHAKANADARAWA";    // Test content of the SMS
-String Test_SMS  = "IWMI MWS v3 Station initializing at UO_ATHURUWELLA";    // Test content of the SMS
+String Test_SMS  = "IWMI MWS v3 Station initializing at UO_MAHAKANADARAWA";    // Test content of the SMS
+//String Test_SMS  = "IWMI MWS v3 Station initializing at UO_ATHURUWELLA";    // Test content of the SMS
+//String Test_SMS  = "IWMI MWS v3 Station initializing at NALLAMUDAWA_MAWATHAWEWA";    // Test content of the SMS
+//String Test_SMS  = "IWMI MWS v3 Station initializing at THIRAPPANE_FARM";    // Test content of the SMS
 int Status;
 //PhP SERVER Definitions
 //String HOST      = "lahiruwije.ddns.net";   // Host name or address of the web server
@@ -108,10 +110,8 @@ byte windspdavg[120]; //120 bytes to keep track of 2 minute average
 int winddiravg[120]; //120 ints to keep track of 2 minute average
 float windgust_10m[10]; //10 floats to keep track of 10 minute max
 int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
-volatile float rainHour[60]={
-  0.0}; //60 floating numbers to keep track of 60 minutes of rain
-volatile float rain5min[5]={
-  0.0}; //5 floating numbers to keep track of 5 minutes of rain
+volatile float rainHour[60]={0.0}; //60 floating numbers to keep track of 60 minutes of rain
+volatile float rain5min[5]={0.0}; //5 floating numbers to keep track of 5 minutes of rain
 
 //These are all the weather values that wunderground expects:
 int winddir = 0; // [0-360 instantaneous wind direction]
@@ -162,7 +162,7 @@ void rainIRQ()
   raintime = millis(); // grab current time
   raininterval = raintime - rainlast; // calculate interval between this and last event
 
-  if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
+    if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
   {
     dailyrainin += rain_bucket_mm; 
     rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
@@ -403,8 +403,8 @@ void loop()
   rain5min[minutes_5m] = 0; //Zero out this minute's rain
   windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
 
-  if(gps.time.hour()==3 && minutes==30)
-    sendDailyRainSMS();
+  //if(gps.time.hour()==3 && minutes==30)
+  //  sendDailyRainSMS();
 
   //Turn off stat LED
   //digitalWrite(STAT2, LOW); 
@@ -732,10 +732,13 @@ void sendSMS()
   //Wait 1 second, and gather GPS data
   smartdelay(800); 
   dtostrf(rainin, 3, 2, rainbuf);
-  //sprintf(sz, "HOTEL_TEST\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\nxxx mm/h",gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second());//[4]
-  //  sprintf(sz, "UO_LABUNORUWA\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\n%.3f mm/h",gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second(),rainin);//[4]
-  //  sprintf(sz, "UO_MAHAKANADARAWA\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\n%.3f mm/h",gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second(),rainin);//[4]
-  sprintf(sz, "UO_ATHURUWELLA\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\n%s mm/h",gps.date.year(),gps.date.month(),gps.date.day(),gps.time.hour(),gps.time.minute(),gps.time.second(),rainbuf);//[4]
+  //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
+  //sprintf(sz, "UO_LABUNORUWA\n%.3f mm/h",rainbuf);//[4]
+  sprintf(sz, "UO_MAHAKANADARAWA\n%.3f mm/h",rainbuf);//[4]
+  //sprintf(sz, "UO_ATHURUWELLA\n%s mm/h",rainbuf);//[4]
+  //sprintf(sz, "NALLAMUDAWA_MAWATHAWEWA\n%s mm/h",rainbuf);//[4]
+  //sprintf(sz, "THIRAPPANE_FARM\n%s mm/h",rainbuf);//[4]
+  
   //Serial.println(sz);
   lcd.clear();
   lcd.print(F("Module Initializing.."));
@@ -762,7 +765,7 @@ void sendSMS()
   Module.Refresh();
   delay(10000);
 
-  lcd.print(F("Sending an alert SMS (long,lat,date,time,hourly rainfall"));
+  lcd.print(F("Sending an alert SMS (hourly rainfall"));
   Status = Module.Send_SMS(Mobile_No1, sz);
   if( Status == OK ){
     lcd.setCursor(0, 2);
@@ -844,59 +847,59 @@ void sendSMS()
    * Finished Sending an alert SMS 
    *****************************************************************************************************************/
 }
-
-void sendDailyRainSMS()
-{
-  /*****************************************************************************************************************
-   * Sending an alert SMS 
-   *****************************************************************************************************************/
-  lcd.clear();
-  char sz[128];
-  char rainbuf[128];
-  dailyrainin=0.0;
-  dtostrf(dailyrainin, 3, 2, rainbuf);
-  //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
-  //sprintf(sz, "UO_LABUNORUWA\n%s mm/d",rainbuf);//[4]
-  //sprintf(sz, "UO_MAHAKANADARAWA\n%s mm/d",rainbuf);//[4]
-  sprintf(sz, "UO_ATHURUWELLA\n%s mm/d",rainbuf);//[4]
-  lcd.clear();
-  lcd.print(F("Module Initializing.."));
-  //Serial.println();
-  //Serial.println(F("Module Initializing..")); //Debug only to del
-  Status = Module.Init(9600);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("Module Ready."));
-    //Serial.println(F("Module Ready.")); //Debug only to del
-  }
-  else{ 
-    lcd.setCursor(0, 2);
-    lcd.print(F("Module Initializing Failed.")); 
-    //Serial.println(F("Module Initializing Failed.")); //Debug only to del
-    delay(1000);
-    lcd.clear();
-    lcd.print(F("ERROR : "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-    while(1){
-    }; 
-  }
-  Module.Refresh();
-  delay(10000);
-
-  lcd.print(F("Sending an alert SMS (long,lat,date,time,hourly rainfall"));
-  Status = Module.Send_SMS(Mobile_No3, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No3"));
-  }
-  else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No3: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
-}
+//
+//void sendDailyRainSMS()
+//{
+//  /*****************************************************************************************************************
+//   * Sending an alert SMS 
+//   *****************************************************************************************************************/
+//  lcd.clear();
+//  char sz[128];
+//  char rainbuf[128];
+//  dailyrainin=0.0;
+//  dtostrf(dailyrainin, 3, 2, rainbuf);
+//  //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
+//  //sprintf(sz, "UO_LABUNORUWA\n%s mm/d",rainbuf);//[4]
+//  //sprintf(sz, "UO_MAHAKANADARAWA\n%s mm/d",rainbuf);//[4]
+//  sprintf(sz, "UO_ATHURUWELLA\n%s mm/d",rainbuf);//[4]
+//  lcd.clear();
+//  lcd.print(F("Module Initializing.."));
+//  //Serial.println();
+//  //Serial.println(F("Module Initializing..")); //Debug only to del
+//  Status = Module.Init(9600);
+//  if( Status == OK ){
+//    lcd.setCursor(0, 2);
+//    lcd.print(F("Module Ready."));
+//    //Serial.println(F("Module Ready.")); //Debug only to del
+//  }
+//  else{ 
+//    lcd.setCursor(0, 2);
+//    lcd.print(F("Module Initializing Failed.")); 
+//    //Serial.println(F("Module Initializing Failed.")); //Debug only to del
+//    delay(1000);
+//    lcd.clear();
+//    lcd.print(F("ERROR : "));
+//    lcd.setCursor(0, 2);
+//    lcd.print(Status);
+//    while(1){
+//    }; 
+//  }
+//  Module.Refresh();
+//  delay(10000);
+//
+//  lcd.print(F("Sending an alert SMS (long,lat,date,time,hourly rainfall"));
+//  Status = Module.Send_SMS(Mobile_No3, sz);
+//  if( Status == OK ){
+//    lcd.setCursor(0, 2);
+//    lcd.print(F("SMS Sent to No3"));
+//  }
+//  else{
+//    lcd.clear();
+//    lcd.print(F("SMS ERROR to No3: "));
+//    lcd.setCursor(0, 2);
+//    lcd.print(Status);
+//  }
+//}
 
 //void send2Server(){
 ///*****************************************************************************************************************
@@ -935,6 +938,7 @@ void sendDailyRainSMS()
 //  
 //  };  
 //}
+
 
 
 
