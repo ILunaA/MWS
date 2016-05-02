@@ -383,6 +383,12 @@ void loop()
     minutes = 0;
     //SMS Alert if hourly rain > 10 mm/h
     //Modified after Lasindu's request 22 April 2016
+    //Calculate amount of rainfall for the last 60 minutes
+    rainin = 0;  
+
+    for(int i = 0 ; i < 60 ; i++)
+     rainin += rainHour[i];
+
     if(rainin > 10.0){
       sendSMS();
     }
