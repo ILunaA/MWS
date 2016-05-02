@@ -45,11 +45,13 @@ String Mobile_No5 = "+94718025479";          // IrDep Marapana Mobile Number 5 w
 String Mobile_No6 = "+94716685855";          // IrDep Karunarathna Mobile Number 6 which the SMS Sends 
 String Mobile_No7 = "+94767201637";          // IWMI Yann Mobile Number 7 which the SMS Sends 
 //String Test_SMS  = "IWMI MWS v3 Station initializing at HOTEL_TEST";    // Test content of the SMS
-//String Test_SMS  = "IWMI MWS v3 Station initializing at UO_LABUNORUWA";    // Test content of the SMS
-String Test_SMS  = "IWMI MWS v3 Station initializing at UO_MAHAKANADARAWA";    // Test content of the SMS
+String Test_SMS  = "IWMI MWS v3 Station initializing at UO_LABUNORUWA";    // Test content of the SMS
+//String Test_SMS  = "IWMI MWS v3 Station initializing at UO_MAHAKANADARAWA";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at UO_ATHURUWELLA";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at NALLAMUDAWA_MAWATHAWEWA";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at THIRAPPANE_FARM";    // Test content of the SMS
+//String Test_SMS  = "IWMI MWS v3 Station initializing at UO_NUWARAWEWA_SALIYAPURA";    // Test content of the SMS
+//String Test_SMS  = "IWMI MWS v3 Station initializing at SRI_SADANANDA_PIRIVENA";    // Test content of the SMS
 int Status;
 //PhP SERVER Definitions
 //String HOST      = "lahiruwije.ddns.net";   // Host name or address of the web server
@@ -110,8 +112,10 @@ byte windspdavg[120]; //120 bytes to keep track of 2 minute average
 int winddiravg[120]; //120 ints to keep track of 2 minute average
 float windgust_10m[10]; //10 floats to keep track of 10 minute max
 int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
-volatile float rainHour[60]={0.0}; //60 floating numbers to keep track of 60 minutes of rain
-volatile float rain5min[5]={0.0}; //5 floating numbers to keep track of 5 minutes of rain
+volatile float rainHour[60]={
+  0.0}; //60 floating numbers to keep track of 60 minutes of rain
+volatile float rain5min[5]={
+  0.0}; //5 floating numbers to keep track of 5 minutes of rain
 
 //These are all the weather values that wunderground expects:
 int winddir = 0; // [0-360 instantaneous wind direction]
@@ -204,7 +208,7 @@ void setup()
   lcd.print("Start MWS");
 
   //for GSM
-  pinMode(SIM900_Power_Pin, OUTPUT);
+  //pinMode(SIM900_Power_Pin, OUTPUT);
 
   //Start Serial port reporting
   Serial.begin(9600);
@@ -733,12 +737,14 @@ void sendSMS()
   smartdelay(800); 
   dtostrf(rainin, 3, 2, rainbuf);
   //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
-  //sprintf(sz, "UO_LABUNORUWA\n%.3f mm/h",rainbuf);//[4]
-  sprintf(sz, "UO_MAHAKANADARAWA\n%.3f mm/h",rainbuf);//[4]
+  sprintf(sz, "UO_LABUNORUWA\n%.3f mm/h",rainbuf);//[4]
+  //sprintf(sz, "UO_MAHAKANADARAWA\n%.3f mm/h",rainbuf);//[4]
   //sprintf(sz, "UO_ATHURUWELLA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "NALLAMUDAWA_MAWATHAWEWA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "THIRAPPANE_FARM\n%s mm/h",rainbuf);//[4]
-  
+  //sprintf(sz, "UO_NUWARAWEWA_SALIYAPURA\n%.3f mm/h",rainbuf);//[4]
+  //sprintf(sz, "SRI_SADANANDA_PIRIVENA\n%.3f mm/h",rainbuf);//[4]
+
   //Serial.println(sz);
   lcd.clear();
   lcd.print(F("Module Initializing.."));
@@ -938,6 +944,7 @@ void sendSMS()
 //  
 //  };  
 //}
+
 
 
 
