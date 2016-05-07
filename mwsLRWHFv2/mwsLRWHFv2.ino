@@ -102,7 +102,7 @@ const byte GPS_PWRCTL = 6; //Pulling this pin low puts GPS to sleep but maintain
 //For Arduino Uno Only
 //const byte STAT1 = 7;
 //to be removed if using a GSM board
-const byte STAT2 = 8;
+//const byte STAT2 = 8;
 
 // analog I/O pins
 const byte WDIR = A0;
@@ -246,7 +246,7 @@ void setup()
 
   //For Arduino UNO Only
   //pinMode(STAT1, OUTPUT); //Status LED Blue
-  pinMode(STAT2, OUTPUT); //Status LED Green
+  //pinMode(STAT2, OUTPUT); //Status LED Green
 
   pinMode(WSPEED, INPUT_PULLUP); // input from wind meters windspeed sensor
   pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
@@ -272,18 +272,18 @@ void setup()
 
   // turn on interrupts
   interrupts();
-  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
-  delay(1000);
-  digitalWrite(STAT2, LOW); //Blink stat LED
+  //digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
+  //delay(1000);
+  //digitalWrite(STAT2, LOW); //Blink stat LED
   smartdelay(60000); //Wait 60 seconds, and gather GPS data
   minutes = gps.time.minute();
   minutes_5m = gps.time.minute();
   minutes_10m = gps.time.minute();
   seconds = gps.time.second();
   lastSecond = millis();
-  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
-  delay(1000);
-  digitalWrite(STAT2, LOW); //Blink stat LED
+  //digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
+  //delay(1000);
+  //digitalWrite(STAT2, LOW); //Blink stat LED
   lcd.print("Weather Station online!");
 }
 
@@ -291,7 +291,7 @@ void loop()
 {
   //Keep track of which minute it is
   loopMSecond = millis() - lastSecond;
-  digitalWrite(STAT2, HIGH); //Blink stat LED
+  //digitalWrite(STAT2, HIGH); //Blink stat LED
   lastSecond = millis();
 
   //Take a speed and direction reading every second for 2 minute average
@@ -341,7 +341,7 @@ void loop()
   //Report all readings
   printWeather();
   //Turn off stat LED
-  digitalWrite(STAT2, LOW); 
+  //digitalWrite(STAT2, LOW); 
   //Wait 1 second, and gather GPS data
   smartdelay(800); 
 }
