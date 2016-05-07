@@ -622,7 +622,7 @@ void printWeather()
   Serial.print(sz); 
 
   Serial.print(",");
-  Serial.print(winddir);//[6]
+  Serial.print(get_wind_direction());//[6]
   Serial.print(",");
   Serial.print(get_wind_speed(), 1);//[7]
   Serial.print(",");
