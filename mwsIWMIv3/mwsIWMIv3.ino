@@ -559,6 +559,9 @@ float get_wind_speed()
   lastWindCheck = millis();
 
   //windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
+  windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
+  windSpeed *= 1.609344; //5.968MPH * 1.609344 = 9.604564992KMPH
+  windSpeed /= 3.6; //9.604564992KMPH / 3.6 = 2.66793472MPS
 
   return(windSpeed);
 }
@@ -621,7 +624,7 @@ void printWeather()
   Serial.print(",");
   Serial.print(winddir);//[6]
   Serial.print(",");
-  Serial.print(windspeedms, 1);//[7]
+  Serial.print(get_wind_speed(), 1);//[7]
   Serial.print(",");
   Serial.print(windgustms, 1);//[8]
   Serial.print(",");
