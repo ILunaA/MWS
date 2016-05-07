@@ -29,57 +29,57 @@
 
 //This is for the 16x2 LCD
 //Most of them are using this
-//LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 //Some use this PCF8574
-LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+//LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
-//this is for RTC
-int clockAddress = 0x68;  // This is the I2C address
-int command = 0;  // This is the command char, in ascii form, sent from the serial port     
-long previousMillis = 0;  // will store last time Temp was updated
-byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
-
-byte decToBcd(byte val)
-{
-  return ( (val/10*16) + (val%10) );
-}
-
-// Convert binary coded decimal to normal decimal numbers
-byte bcdToDec(byte val)
-{
-  return ( (val/16*10) + (val%16) );
-}
-
-// Gets the date and time from the ds1307 and prints result
-char* getDateDs1307(int flag) {
-  //if flag == 0 : date output
-  //if flag == 1 : time output
-  // Reset the register pointer
-  Wire.beginTransmission(clockAddress);
-  Wire.write(byte(0x00));
-  Wire.endTransmission();
-
-  Wire.requestFrom(clockAddress, 7);
-
-  // A few of these need masks because certain bits are control bits
-  second     = bcdToDec(Wire.read() & 0x7f);
-  minute     = bcdToDec(Wire.read());
-
-  // Need to change this if 12 hour am/pm
-  hour       = bcdToDec(Wire.read() & 0x3f);  
-  dayOfWeek  = bcdToDec(Wire.read());
-  dayOfMonth = bcdToDec(Wire.read());
-  month      = bcdToDec(Wire.read());
-  year       = bcdToDec(Wire.read());
-
-  char sza[32];
-  if (flag==0)
-    sprintf(sza, "%02d-%02d-%02d",year,month,dayOfMonth);
-  if (flag==1)
-    sprintf(sza, "%02d:%02d:%02d",hour,minute,second);
-  return(sza);
-}
-//end of RTC
+////this is for RTC
+//int clockAddress = 0x68;  // This is the I2C address
+//int command = 0;  // This is the command char, in ascii form, sent from the serial port     
+//long previousMillis = 0;  // will store last time Temp was updated
+//byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+//
+//byte decToBcd(byte val)
+//{
+//  return ( (val/10*16) + (val%10) );
+//}
+//
+//// Convert binary coded decimal to normal decimal numbers
+//byte bcdToDec(byte val)
+//{
+//  return ( (val/16*10) + (val%16) );
+//}
+//
+//// Gets the date and time from the ds1307 and prints result
+//char* getDateDs1307(int flag) {
+//  //if flag == 0 : date output
+//  //if flag == 1 : time output
+//  // Reset the register pointer
+//  Wire.beginTransmission(clockAddress);
+//  Wire.write(byte(0x00));
+//  Wire.endTransmission();
+//
+//  Wire.requestFrom(clockAddress, 7);
+//
+//  // A few of these need masks because certain bits are control bits
+//  second     = bcdToDec(Wire.read() & 0x7f);
+//  minute     = bcdToDec(Wire.read());
+//
+//  // Need to change this if 12 hour am/pm
+//  hour       = bcdToDec(Wire.read() & 0x3f);  
+//  dayOfWeek  = bcdToDec(Wire.read());
+//  dayOfMonth = bcdToDec(Wire.read());
+//  month      = bcdToDec(Wire.read());
+//  year       = bcdToDec(Wire.read());
+//
+//  char sza[32];
+//  if (flag==0)
+//    sprintf(sza, "%02d-%02d-%02d",year,month,dayOfMonth);
+//  if (flag==1)
+//    sprintf(sza, "%02d:%02d:%02d",hour,minute,second);
+//  return(sza);
+//}
+////end of RTC
 
 
 TinyGPSPlus gps;
@@ -101,6 +101,7 @@ const byte WSPEED = 3;
 const byte GPS_PWRCTL = 6; //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
 //For Arduino Uno Only
 //const byte STAT1 = 7;
+//to be removed if using a GSM board
 const byte STAT2 = 8;
 
 // analog I/O pins
@@ -322,6 +323,8 @@ void loop()
   if(++minutes > 59) minutes = 0;
   minutes_5m += seconds/60;
   if(++minutes_5m > 4){
+    //Report all readings every 5 minutes
+    //printWeather();
     minutes_5m = 0;
     for (i=0;i<5;i++) rain5min[i] = 0;
   }
@@ -480,6 +483,9 @@ float get_wind_speed()
   lastWindCheck = millis();
 
   //windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
+  windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
+  windSpeed *= 1.609344; //5.968MPH * 1.609344 = 9.604564992KMPH
+  windSpeed /= 3.6; //9.604564992KMPH / 3.6 = 2.66793472MPS
 
   return(windSpeed);
 }
@@ -495,23 +501,23 @@ int get_wind_direction()
   // Each threshold is the midpoint between adjacent headings. The output is degrees for that ADC reading.
   // Note that these are not in compass degree order! See Weather Meters datasheet for more information.
 
-  if (adc < 380) return (113);
-  if (adc < 393) return (68);
-  if (adc < 414) return (90);
-  if (adc < 456) return (158);
-  if (adc < 508) return (135);
-  if (adc < 551) return (203);
-  if (adc < 615) return (180);
-  if (adc < 680) return (23);
-  if (adc < 746) return (45);
-  if (adc < 801) return (248);
-  if (adc < 833) return (225);
-  if (adc < 878) return (338);
-  if (adc < 913) return (0);
-  if (adc < 940) return (293);
-  if (adc < 967) return (315);
-  if (adc < 990) return (270);
-  return (-1); // error, disconnected?
+  if (adc < 380) return (113);//NOT WORKING
+  else if (adc < 393) return (68);//NOT WORKING
+  else if (adc < 414) return (90);//NOT WORKING
+  else if (adc < 456) return (90);//(158);//E is 90 degrees CW from North = 0
+  else if (adc < 508) return (135);//SE is 135 degrees CW from North = 0
+  else if (adc < 551) return (180);//(203);//S is 180 degrees CW from North = 0
+  else if (adc < 615) return (45);//(180);//NE is 45 degrees CW from North = 0
+  else if (adc < 680) return (23);//NOT WORKING
+  else if (adc < 746) return (225);//(45);//SW is 225 degrees CW from North = 0
+  else if (adc < 801) return (248);//NOT WORKING
+  else if (adc < 833) return (0);//(225);//N is 0 degrees CW from North = 0
+  else if (adc < 878) return (338);//NOT WORKING
+  else if (adc < 913) return (325);//(0);//NW is 325 degrees CW from North = 0
+  else if (adc < 940) return (293);//NOT WORKING
+  else if (adc < 967) return (270);//(315);//W is 270 degrees CW from North = 0
+  else if (adc < 990) return (270);//NOT WORKING
+  else return (-1); // error, disconnected?
 }
 
 
@@ -540,9 +546,9 @@ void printWeather()
   Serial.print(sz); 
 
   Serial.print(",");
-  Serial.print(winddir);//[6]
+  Serial.print(get_wind_direction());//[6]
   Serial.print(",");
-  Serial.print(windspeedms, 1);//[7]
+  Serial.print(get_wind_speed(), 1);//[7]
   Serial.print(",");
   Serial.print(windgustms, 1);//[8]
   Serial.print(",");
