@@ -20,7 +20,7 @@
 #define ERROR_TCP_CONNECTION_FAILED    -100
 
 #define ERROR_SMS_MODE_NOT_SELECTED    -10
-#define ERROR_SMS_NUMBER_NOT_SET     -  20
+#define ERROR_SMS_NUMBER_NOT_SET       -20
 
 #define OK                              1
 
@@ -33,7 +33,10 @@
 #define SIM900                          2
 #define SM5100B                         3
 
-#define SIM900_Power_Pin                7
+//old board sim 900
+//#define SIM900_Power_Pin                7
+//new board sim 900
+#define SIM900_Power_Pin                9
 
 /*****************************************************************************************************************
 

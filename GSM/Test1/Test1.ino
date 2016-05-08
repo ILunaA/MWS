@@ -21,6 +21,7 @@ GSM_Module Module(SIM900);
 
 void setup()
 {
+  pinMode(SIM900_Power_Pin, OUTPUT);
 //Initialize serial port for communication.
   Serial.begin(9600);
   
@@ -45,7 +46,7 @@ void setup()
   }
   
   Module.Refresh();
-  delay(5000);
+  delay(10000);
   
 /*****************************************************************************************************************/
 }
@@ -66,45 +67,46 @@ void loop() {
     
     Serial.print("SMS ERROR : ");
     Serial.println(Status);
+    delay(2000);
     
   }
 
 /*****************************************************************************************************************
     Connecting to the Server and Sending Data 
 *****************************************************************************************************************/
-  Serial.println("Connecting to Server");
-  
-  Status = Module.POST_Data(HOST, PORT, temperature, humidity);
-  
-  if( Status == OK ){
-  
-    Serial.print("Connecting Successful");
-    Serial.print("    ");
-    Serial.println(Module.Received_String());
-    
-  }else{
-    
-    Serial.print("TCP ERROR Code : ");
-    Serial.print(Status);
-    Serial.print("    ");
-    Serial.println(Module.Received_String());
-    
-  }
-  
-// Listen to the Module print received data.   
-  
-  while(1){
-  
-    do{
-      
-        Module.Wait(1000);
-      
-      }while(!Module.String_Received());
-      
-      Serial.println(Module.Received_String());
-  
-  };
-
+//  Serial.println("Connecting to Server");
+//  
+//  Status = Module.POST_Data(HOST, PORT, temperature, humidity);
+//  
+//  if( Status == OK ){
+//  
+//    Serial.print("Connecting Successful");
+//    Serial.print("    ");
+//    Serial.println(Module.Received_String());
+//    
+//  }else{
+//    
+//    Serial.print("TCP ERROR Code : ");
+//    Serial.print(Status);
+//    Serial.print("    ");
+//    Serial.println(Module.Received_String());
+//    
+//  }
+//  
+//// Listen to the Module print received data.   
+//  
+//  while(1){
+//  
+//    do{
+//      
+//        Module.Wait(1000);
+//      
+//      }while(!Module.String_Received());
+//      
+//      Serial.println(Module.Received_String());
+//  
+//  };
+//
 }
 
 
