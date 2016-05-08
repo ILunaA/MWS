@@ -33,61 +33,10 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 //Some use this PCF8574
 //LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
-////this is for RTC
-//int clockAddress = 0x68;  // This is the I2C address
-//int command = 0;  // This is the command char, in ascii form, sent from the serial port     
-//long previousMillis = 0;  // will store last time Temp was updated
-//byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
-//
-//byte decToBcd(byte val)
-//{
-//  return ( (val/10*16) + (val%10) );
-//}
-//
-//// Convert binary coded decimal to normal decimal numbers
-//byte bcdToDec(byte val)
-//{
-//  return ( (val/16*10) + (val%16) );
-//}
-//
-//// Gets the date and time from the ds1307 and prints result
-//char* getDateDs1307(int flag) {
-//  //if flag == 0 : date output
-//  //if flag == 1 : time output
-//  // Reset the register pointer
-//  Wire.beginTransmission(clockAddress);
-//  Wire.write(byte(0x00));
-//  Wire.endTransmission();
-//
-//  Wire.requestFrom(clockAddress, 7);
-//
-//  // A few of these need masks because certain bits are control bits
-//  second     = bcdToDec(Wire.read() & 0x7f);
-//  minute     = bcdToDec(Wire.read());
-//
-//  // Need to change this if 12 hour am/pm
-//  hour       = bcdToDec(Wire.read() & 0x3f);  
-//  dayOfWeek  = bcdToDec(Wire.read());
-//  dayOfMonth = bcdToDec(Wire.read());
-//  month      = bcdToDec(Wire.read());
-//  year       = bcdToDec(Wire.read());
-//
-//  char sza[32];
-//  if (flag==0)
-//    sprintf(sza, "%02d-%02d-%02d",year,month,dayOfMonth);
-//  if (flag==1)
-//    sprintf(sza, "%02d:%02d:%02d",hour,minute,second);
-//  return(sza);
-//}
-////end of RTC
-
-
 TinyGPSPlus gps;
 
 //For Arduino Uno
-//static const int RXPin = 5, TXPin = 4; //GPS is attached to pin 4(TX from GPS) and pin 5(RX into GPS)
-//For Arduino Mega
-static const int RXPin = 50, TXPin = 51; //GPS is attached to pin 7(TX from GPS) and pin 6(RX into GPS)
+static const int RXPin = 5, TXPin = 4; //GPS is attached to pin 4(TX from GPS) and pin 5(RX into GPS)
 SoftwareSerial ss(RXPin, TXPin); 
 
 MPL3115A2 myPressure; //Create an instance of the pressure sensor
@@ -168,10 +117,10 @@ int Rainindi=0;
 //byte month, day, hour, minute, second, hundredths;
 
 //Calibrate rain bucket here
-//Rectangle raingauge from Sparkfun.com weather sensors
-//float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
+//Rectangle raingauge from Sparkfun.com/MISOL weather sensors
+float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
 //DAVISNET Rain Collector 2
-float rain_bucket_mm = 0.01*25.4;//Each dump is 0.01" of water
+//float rain_bucket_mm = 0.01*25.4;//Each dump is 0.01" of water
 
 // volatiles are subject to modification by IRQs
 volatile unsigned long raintime, rainlast, raininterval, rain, Rainindtime, Rainindlast;
