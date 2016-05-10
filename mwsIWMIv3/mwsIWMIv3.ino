@@ -746,13 +746,13 @@ void sendSMS()
   smartdelay(800); 
   dtostrf(rainin, 3, 2, rainbuf);
   //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
-  sprintf(sz, "UO_LABUNORUWA\n%.3f mm/h",rainbuf);//[4]
-  //sprintf(sz, "UO_MAHAKANADARAWA\n%.3f mm/h",rainbuf);//[4]
+  sprintf(sz, "UO_LABUNORUWA\n%s mm/h",rainbuf);//[4]
+  //sprintf(sz, "UO_MAHAKANADARAWA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "UO_ATHURUWELLA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "NALLAMUDAWA_MAWATHAWEWA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "THIRAPPANE_FARM\n%s mm/h",rainbuf);//[4]
-  //sprintf(sz, "UO_NUWARAWEWA_SALIYAPURA\n%.3f mm/h",rainbuf);//[4]
-  //sprintf(sz, "SRI_SADANANDA_PIRIVENA\n%.3f mm/h",rainbuf);//[4]
+  //sprintf(sz, "UO_NUWARAWEWA_SALIYAPURA\n%s mm/h",rainbuf);//[4]
+  //sprintf(sz, "SRI_SADANANDA_PIRIVENA\n%s mm/h",rainbuf);//[4]
 
   //Serial.println(sz);
   lcd.clear();
