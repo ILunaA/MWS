@@ -17,6 +17,9 @@
  This example code assumes the GP-635T GPS module is attached.
  
  */
+ 
+//#define LCD_REPORTING
+#define UART_REPORTING
 
 #include <Wire.h> //I2C needed for sensors
 #include "MPL3115A2.h" //Pressure sensor
@@ -30,13 +33,14 @@
 
 //This is for the 16x2 LCD
 //Most of them are using this
-LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 //Some use this PCF8574
 //LiquidCrystal_I2C lcd(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 //FOR GSM COMS
 GSM_Module Module(SIM900);// For SIM900 GSM            
 //GSM_Module Module(SM5100B);// For SM5100B GSM
+
 String Mobile_No1 = "+94773709854";          // IWMI Soumya Mobile Number 1 which the SMS Sends 
 String Mobile_No2 = "+94713805660";          // IrDep Lasindu Mobile Number 2 which the SMS Sends
 String Mobile_No3 = "+94776141305";          // IWMI Lahiru Mobile Number 3 which the SMS Sends 
@@ -44,8 +48,10 @@ String Mobile_No4 = "+94716890308";          // IrDep Prasanna Mobile Number 4 w
 String Mobile_No5 = "+94718025479";          // IrDep Marapana Mobile Number 5 which the SMS Sends 
 String Mobile_No6 = "+94716685855";          // IrDep Karunarathna Mobile Number 6 which the SMS Sends 
 String Mobile_No7 = "+94767201637";          // IWMI Yann Mobile Number 7 which the SMS Sends 
+
+String Test_SMS  = "IWMI MWS v3 Testing";
 //String Test_SMS  = "IWMI MWS v3 Station initializing at HOTEL_TEST";    // Test content of the SMS
-String Test_SMS  = "IWMI MWS v3 Station initializing at UO_LABUNORUWA";    // Test content of the SMS
+//String Test_SMS  = "IWMI MWS v3 Station initializing at UO_LABUNORUWA";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at UO_MAHAKANADARAWA";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at UO_ATHURUWELLA";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at NALLAMUDAWA_MAWATHAWEWA";    // Test content of the SMS
@@ -88,17 +94,22 @@ const byte REFERENCE_3V3 = A3;
 
 //Global Variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-long lastSecond; //The millis counter to see when a second rolls by
-long loopMSecond; //time it took to loop once in millis
-byte seconds; //When it hits 60, increase the current minute
-byte seconds_2m; //Keeps track of the "wind speed/dir avg" over last 2 minutes array of data
-byte minutes; //Keeps track of where we are in various arrays of data
-byte minutes_5m; //Keeps track of where we are in rain5min over last 5 minutes array of data
-byte minutes_10m; //Keeps track of where we are in wind gust/dir over last 10 minutes array of data
+long lastMSecond     = 0; //The millis counter to see when a second rolls by
+long loopMSecond     = 0; //time it took to loop once in millis
+long loopMSecond_Rem = 0; // Remining millis of Second calcultion.
+byte seconds         = 0; //When it hits 60, increase the current minute
+byte last_seconds    = 0;
+int  loop_seconds    = 0;
+byte seconds_2m      = 0; //Keeps track of the "wind speed/dir avg" over last 2 minutes array of data
+byte minutes         = 0; //Keeps track of where we are in various arrays of data
+byte minutes_5m      = 0; //Keeps track of where we are in rain5min over last 5 minutes array of data
+byte minutes_10m     = 0; //Keeps track of where we are in wind gust/dir over last 10 minutes array of data
+byte hours           = 0; 
+byte last_hour       = 0;
 
-long lastWindCheck = 0;
+long lastWindCheck        = 0;
 volatile long lastWindIRQ = 0;
-volatile byte windClicks = 0;
+volatile byte windClicks  = 0;
 
 //We need to keep track of the following variables:
 //Wind speed/dir each update (no storage)
@@ -108,31 +119,31 @@ volatile byte windClicks = 0;
 //Rain over the past hour (store 1 per minute)
 //Total rain over date (store one per day)
 
-byte windspdavg[120]; //120 bytes to keep track of 2 minute average
-int winddiravg[120]; //120 ints to keep track of 2 minute average
-float windgust_10m[10]; //10 floats to keep track of 10 minute max
-int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
-volatile float rainHour[60]={
-  0.0}; //60 floating numbers to keep track of 60 minutes of rain
-volatile float rain5min[5]={
-  0.0}; //5 floating numbers to keep track of 5 minutes of rain
+float windspdavg[120]        = {0.0}; //120 bytes to keep track of 2 minute average
+int winddiravg[120]          = {0.0}; //120 ints to keep track of 2 minute average
+float windgust_10m[10]       = {0.0}; //10 floats to keep track of 10 minute max
+int windgustdirection_10m[10]= {0.0}; //10 ints to keep track of 10 minute max
+volatile float rainHour[60]  ={0.0}; //60 floating numbers to keep track of 60 minutes of rain
+volatile float rainDay[24]   ={0.0}; //24 floating numbers to keep track of 24 hours of rain
+volatile float rain5min[5]   ={0.0}; //5 floating numbers to keep track of 5 minutes of rain
 
 //These are all the weather values that wunderground expects:
-int winddir = 0; // [0-360 instantaneous wind direction]
-float windspeedms = 0; // [mph instantaneous wind speed]
-float windgustms = 0; // [mph current wind gust, using software specific time period]
-int windgustdir = 0; // [0-360 using software specific time period]
-float windspdms_avg2m = 0; // [mph 2 minute average wind speed mph]
-int winddir_avg2m = 0; // [0-360 2 minute average wind direction]
-float windgustms_10m = 0; // [mph past 10 minutes wind gust mph ]
-int windgustdir_10m = 0; // [0-360 past 10 minutes wind gust direction]
-float humidity = 0; // [%]
-float tempf = 0; // [temperature F]
-float rainin = 0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
+int winddir           = 0; // [0-360 instantaneous wind direction]
+float windspeedms     = 0.0; // [mph instantaneous wind speed]
+float windgustms      = 0.0; // [mph current wind gust, using software specific time period]
+int windgustdir       = 0; // [0-360 using software specific time period]
+float windspdms_avg2m = 0.0; // [mph 2 minute average wind speed mph]
+int winddir_avg2m     = 0; // [0-360 2 minute average wind direction]
+float windgustms_10m  = 0.0; // [mph past 10 minutes wind gust mph ]
+int windgustdir_10m   = 0; // [0-360 past 10 minutes wind gust direction]
+float humidity        = 0.0; // [%]
+float tempf           = 0.0; // [temperature F]
+float rainin          = 0.0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
+float rain_day        = 0.0;
 volatile float dailyrainin = 0.0; // [rain inches so far today in local time]
-float rainin5min=0.0; // [rain inches so far last 5 minutes in local time]
+float rainin5min      = 0.0; // [rain inches so far last 5 minutes in local time]
 //float baromin = 30.03;// [barom in] - It's hard to calculate baromin locally, do this in the agent
-float pressure = 0;
+float pressure        = 0.0;
 //float dewptf; // [dewpoint F] - It's hard to calculate dewpoint locally, do this in the agent
 
 float batt_lvl = 11.8; //[analog value from 0 to 1023]
@@ -153,6 +164,10 @@ float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
 // volatiles are subject to modification by IRQs
 volatile unsigned long raintime, rainlast, raininterval, rain, Rainindtime, Rainindlast;
 
+
+float currentSpeed;
+int currentDirection;
+
 //for loop
 int i;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -172,18 +187,22 @@ void rainIRQ()
     rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
     rain5min[minutes_5m] += rain_bucket_mm; // increase this 5 mnts amout of rain
     rainlast = raintime; // set up for next event
+    #ifdef UART_REPORTING
+    Serial.print(F("RainIRQ! "));
+    Serial.print(F("rainHour["));
+    Serial.print(minutes);
+    Serial.print(F("] : "));
+    Serial.println(rainHour[minutes]);
+    #endif
   }
 
   //Rain or not (1 or 0)
-  if(rainin >0)
+  if(rainin > 0)
   {
     Rainindi=1;
     Rainindtime = millis();
-  }
-  if(rainin ==0)
-  {
+  }else{
     Rainindi=0; 
-    Rainindlast = millis();
     Rainindlast = Rainindtime;
   }
 }
@@ -203,30 +222,37 @@ void wspeedIRQ()
 void setup()
 {
   // set up the LCD's number of columns and rows:
-  lcd.begin(16, 2);
+  
+  // Start Serial port reporting
+  #ifdef UART_REPORTING
+  Serial.begin(9600);
+  #endif
+
+  #ifdef LCD_REPORTING  
+  lcd.begin();
   lcd.backlight();
   lcd.print("Start MWS");
-
-  //for GSM
-  //pinMode(SIM900_Power_Pin, OUTPUT);
-
-  //Start Serial port reporting
-  Serial.begin(9600);
-
-  //Switch on the GPS
+  #endif
+  #ifdef UART_REPORTING
+  Serial.println(F("Start MWS"));
+  #endif
+  // for GSM
+  pinMode(SIM900_Power_Pin, OUTPUT);
+  
+  // Switch on the GPS
   pinMode(GPS_PWRCTL, OUTPUT);
   digitalWrite(GPS_PWRCTL, HIGH); //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
 
-  //Start software serial for GPS
-  //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
+  // Start software serial for GPS
+  // Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
   ss.begin(9600); 
   Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
   Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
   Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,rainindicate,rain5min,pressure,batt_lvl,light_lvl"));
 
-  //For Arduino UNO Only
-  //pinMode(STAT1, OUTPUT); //Status LED Blue
-  //pinMode(STAT2, OUTPUT); //Status LED Green
+  // For Arduino UNO Only
+//  pinMode(STAT1, OUTPUT); //Status LED Blue
+//  pinMode(STAT2, OUTPUT); //Status LED Green
 
   pinMode(WSPEED, INPUT_PULLUP); // input from wind meters windspeed sensor
   pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
@@ -234,38 +260,14 @@ void setup()
   pinMode(REFERENCE_3V3, INPUT);
   pinMode(LIGHT, INPUT);
 
-  //Switch on the GPS
-  pinMode(GPS_PWRCTL, OUTPUT);
-  digitalWrite(GPS_PWRCTL, HIGH); //Pulling this pin low puts GPS to sleep but maintains RTC and RAM
-
-  //Start software serial for GPS
-  //Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
-  ss.begin(9600); 
-  Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
-  Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
-  Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,rainindicate,rain5min,pressure,batt_lvl,light_lvl"));
-
-  //For Arduino UNO Only
-  //pinMode(STAT1, OUTPUT); //Status LED Blue
-  //pinMode(STAT2, OUTPUT); //Status LED Green
-
-  pinMode(WSPEED, INPUT_PULLUP); // input from wind meters windspeed sensor
-  pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
-
-  pinMode(REFERENCE_3V3, INPUT);
-  pinMode(LIGHT, INPUT);
-
-  //Configure the pressure sensor
+  // Configure the pressure sensor
   myPressure.begin(); // Get sensor online
   myPressure.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
   myPressure.setOversampleRate(7); // Set Oversample to the recommended 128
   myPressure.enableEventFlags(); // Enable all three pressure and temp event flags 
 
-    //Configure the humidity sensor
+  // Configure the humidity sensor
   myHumidity.begin();
-
-  seconds = 0;
-  lastSecond = millis();
 
   // attach external interrupt pins to IRQ functions
   attachInterrupt(0, rainIRQ, FALLING);
@@ -273,46 +275,38 @@ void setup()
 
   // turn on interrupts
   interrupts();
-  //digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
-  delay(1000);
-  //digitalWrite(STAT2, LOW); //Blink stat LED
+//  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
+//  delay(1000);
+//  digitalWrite(STAT2, LOW); //Blink stat LED
   smartdelay(60000); //Wait 60 seconds, and gather GPS data
   minutes = gps.time.minute();
-  minutes_5m = gps.time.minute();
-  minutes_10m = gps.time.minute();
+  minutes_5m = (gps.time.minute())%5;
+  minutes_10m = (gps.time.minute())%10;
   seconds = gps.time.second();
-  lastSecond = millis();
-  //digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
-  delay(1000);
-  //digitalWrite(STAT2, LOW); //Blink stat LED
-  lcd.print("Weather Station online!");
+  seconds_2m = gps.time.second();
+  hours = gps.time.hour();
+  
+//  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
+//  delay(1000);
+//  digitalWrite(STAT2, LOW); //Blink stat LED
+//  lcd.print("Weather Station online!");
 
   //GSM COMS MODULE
   /*****************************************************************************************************************
    * Initialize the GSM module. 
    *****************************************************************************************************************/
-  lcd.clear();
-  lcd.print(F("Module Initializing.."));
-  //Serial.println();
-  //Serial.println(F("Module Initializing..")); //Debug only to del
-  Status = Module.Init(9600);
-  if( Status == OK ){
+  if(GSM_Module_Init() != OK){
+    #ifdef LCD_REPORTING    
     lcd.setCursor(0, 2);
-    lcd.print(F("Module Ready."));
-    //Serial.println(F("Module Ready.")); //Debug only to del
-  }
-  else{ 
-    lcd.setCursor(0, 2);
-    lcd.print(F("Module Initializing Failed.")); 
-    //Serial.println(F("Module Initializing Failed.")); //Debug only to del
-    delay(1000);
-    lcd.clear();
-    lcd.print(F("ERROR : "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
+    lcd.print(F("System Halt"));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.println(F("System Halt"));
+    #endif
     while(1){
-    }; 
+    };
   }
+     
   Module.Refresh();
   delay(10000);
   /*****************************************************************************************************************
@@ -321,105 +315,214 @@ void setup()
   /*****************************************************************************************************************
    * Sending a test SMS 
    *****************************************************************************************************************/
+  #ifdef LCD_REPORTING
   lcd.clear();
   lcd.print(F("Sending a Test SMS"));
-  Status = Module.Send_SMS(Mobile_No1, Test_SMS);//Soumya
-  Status = Module.Send_SMS(Mobile_No2, Test_SMS);//Lasindu
-  Status = Module.Send_SMS(Mobile_No3, Test_SMS);//Lahiru
-  Status = Module.Send_SMS(Mobile_No4, Test_SMS);//Prasanna
-  Status = Module.Send_SMS(Mobile_No5, Test_SMS);//Maradana
-  Status = Module.Send_SMS(Mobile_No6, Test_SMS);//Karunarathna
-  Status = Module.Send_SMS(Mobile_No7, Test_SMS);//Yann
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent"));
-  }
-  else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR : "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
+  #endif
+  #ifdef UART_REPORTING
+  Serial.println(F("Sending a Test SMS"));
+  #endif
+  
+//  Status = Module.Send_SMS(Mobile_No1, Test_SMS);//Soumya
+//  Status = Module.Send_SMS(Mobile_No2, Test_SMS);//Lasindu
+//  Status = Module.Send_SMS(Mobile_No3, Test_SMS);//Lahiru
+//  Status = Module.Send_SMS(Mobile_No4, Test_SMS);//Prasanna
+//  Status = Module.Send_SMS(Mobile_No5, Test_SMS);//Marapana
+//  Status = Module.Send_SMS(Mobile_No6, Test_SMS);//Karunarathna
+//  Status = Module.Send_SMS(Mobile_No7, Test_SMS);//Yann
+
+//  sendSMS(Mobile_No1, Test_SMS);//Soumya
+//  sendSMS(Mobile_No2, Test_SMS);//Lasindu
+  sendSMS(Mobile_No3, Test_SMS);//Lahiru
+//  sendSMS(Mobile_No4, Test_SMS);//Prasanna
+//  sendSMS(Mobile_No5, Test_SMS);//Marapana
+//  sendSMS(Mobile_No6, Test_SMS);//Karunarathna
+//  sendSMS(Mobile_No7, Test_SMS);//Yann
+  
   /*****************************************************************************************************************
    * Finished Sending a test SMS 
    *****************************************************************************************************************/
+   lastMSecond = millis();
 }
 
 void loop()
 {
-
+  
   //Keep track of which minute it is
-  loopMSecond = millis() - lastSecond;
-  //digitalWrite(STAT2, HIGH); //Blink stat LED
-  lastSecond = millis();
-
+  loopMSecond     = (millis() - lastMSecond) + loopMSecond_Rem;
+  lastMSecond     = millis();
+  loop_seconds    = loopMSecond/1000; 
+  loopMSecond_Rem = loopMSecond%1000;
+  
+  seconds_2m += loop_seconds;
+  seconds    += loop_seconds;
+  
+  if(seconds > 59){
+    seconds     = seconds%60;
+    minutes     ++;
+    minutes_5m  ++;
+    minutes_10m ++;
+  }
+  
   //Take a speed and direction reading every second for 2 minute average
-  seconds_2m += loopMSecond/1000;
-  if(++seconds_2m > 119) seconds_2m = 0;
+  if(last_seconds != seconds){ 
+    currentSpeed           = get_wind_speed();
+    currentDirection       = get_wind_direction();
+    windspdavg[seconds_2m] = currentSpeed;
+    winddiravg[seconds_2m] = currentDirection;
+    
+    #ifdef UART_REPORTING 
+    char time_s[32];
+    sprintf(time_s, "%02d:%02d:%02d", hours, minutes, seconds);
+    Serial.print(time_s); 
+    Serial.print(F("\t"));
+    Serial.print(F("Wind Speed :")); 
+    Serial.print(currentSpeed);
+    Serial.print(F("\t"));
+    Serial.print(F("Wind Direction :")); 
+    switch(currentDirection){
+      case 0  :  Serial.println(F(" N "));   break;
+      case 45 :  Serial.println(F(" NE "));  break;
+      case 90 :  Serial.println(F(" E "));   break;
+      case 135:  Serial.println(F(" SE "));  break;
+      case 180:  Serial.println(F(" S "));   break;  
+      case 225:  Serial.println(F(" SW "));  break; 
+      case 270:  Serial.println(F(" W "));   break;
+      case 325:  Serial.println(F(" NW "));  break;
+      default :  Serial.println(F(" ERROR "));
+    }
+    #endif
+ 
+    //Check to see if this is a gust for the minute
+    if(currentSpeed > windgust_10m[minutes_10m])
+    {
+      windgust_10m[minutes_10m] = currentSpeed;
+      windgustdirection_10m[minutes_10m] = currentDirection;
+    }
 
-  //Calc the wind speed and direction every second for 120 second to get 2 minute average
-  float currentSpeed = get_wind_speed();
-  int currentDirection = get_wind_direction();
-  windspdavg[seconds_2m] = (int)currentSpeed;
-  winddiravg[seconds_2m] = currentDirection;
-
-  //Check to see if this is a gust for the minute
-  if(currentSpeed > windgust_10m[minutes_10m])
-  {
-    windgust_10m[minutes_10m] = currentSpeed;
-    windgustdirection_10m[minutes_10m] = currentDirection;
+    //Check to see if this is a gust for the day
+    if(currentSpeed > windgustms)
+    {
+      windgustms  = currentSpeed;
+      windgustdir = currentDirection;
+    }
+    last_seconds = seconds;
   }
+  
+  if(seconds_2m > 119){
+    seconds_2m = seconds_2m%120;
+    
+    //Calc the wind speed and direction every second for 120 second to get 2 minute average
+    //Calc windspdms_avg2m
+    float temp = 0;
+    for(int i = 0 ; i < 120 ; i++){
+      temp += windspdavg[i];
+      windspdavg[i] = 0;
+    }
+    temp /= 120.0;
+    windspdms_avg2m = temp;
 
-  //Check to see if this is a gust for the day
-  if(currentSpeed > windgustms)
-  {
-    windgustms = currentSpeed;
-    windgustdir = currentDirection;
+    //Calc winddir_avg2m
+    temp = 0; //Can't use winddir_avg2m because it's an int
+    for(int i = 0 ; i < 120 ; i++){
+      temp += winddiravg[i];
+      winddiravg[i] = 0;  
+    }
+    temp /= 120;
+    winddir_avg2m = temp;
+    
+    #ifdef UART_REPORTING 
+    Serial.print(F("Wind Speed Avg(2min) :")); 
+    Serial.print(windspdms_avg2m);
+    Serial.print(F("\t"));
+    Serial.print(F("Wind Direction Avg(2min) : :")); 
+    Serial.println(winddir_avg2m);
+    #endif
+
   }
-  seconds += loopMSecond/1000;
-  if(++seconds > 59) seconds = 0;
-  minutes += seconds/60;
-  if(++minutes > 59) {
-    minutes = 0;
-    //SMS Alert if hourly rain > 10 mm/h
-    //Modified after Lasindu's request 22 April 2016
+ 
+  if(minutes > 59) {  
+    minutes = minutes%60;
+    hours ++; 
     //Calculate amount of rainfall for the last 60 minutes
     rainin = 0;  
 
-    for(int i = 0 ; i < 60 ; i++)
+    for(int i = 0 ; i < 60 ; i++){
      rainin += rainHour[i];
-
-    if(rainin > 10.0){
-      sendSMS();
+     rainHour[i] = 0;
+    }
+    #ifdef UART_REPORTING 
+    Serial.print(F("Hourly Rain (rainin) :")); 
+    Serial.println(rainin);
+    #endif
+    
+    rainDay[hours] = rainin; 
+    
+    if(rainin > 10.0){ //SMS Alert if hourly rain > 10 mm/h, Modified after Lasindu's request 22 April 2016
+      #ifdef UART_REPORTING 
+      Serial.println(F("Rain Exceeded Threshold, Sending Alert..")); 
+      #endif
+      sendAlart();
     }
     //Hourly online reporting
     //Send temperature&humidity to PhP Server (to be enhanced)
     //send2Server();
+    
+    if(hours == 2){
+      
+     rain_day = 0;
+    
+      for(int i = 0 ; i < 24 ; i++){
+        rain_day += rainDay[i];
+        rainDay[i] = 0.0;
+      }
+      sendDailyRainSMS();
+    } 
+    
   }
-  minutes_5m += seconds/60;
-  if(++minutes_5m > 4){
-    minutes_5m = 0;
+  
+  if(minutes_5m > 4){
+    
+    minutes_5m = minutes_5m%5;
+    
+    //Calculate amount of rainfall for the last 5 minutes
+    rainin5min = 0;  
+    for(int i = 0 ; i < 5 ; i++) rainin5min += rain5min[i];
     for (i=0;i<5;i++) rain5min[i] = 0;
     //Report all readings
-    printWeather();
+    printWeather(); 
   }
-  minutes_10m += seconds/60;
-  if(++minutes_10m > 9){
-    minutes_10m = 0;
+  
+  if(minutes_10m > 9){
+    
+    minutes_10m = minutes_10m%10;
+
+    //Find the largest windgust in the last 10 minutes
+    windgustms_10m = 0;
+    windgustdir_10m = 0;
+    //Step through the 10 minutes  
+    for(int i = 0; i < 10 ; i++)
+    {
+      if(windgust_10m[i] > windgustms_10m)
+      {
+        windgustms_10m  = windgust_10m[i];
+        windgustdir_10m = windgustdirection_10m[i];
+      }
+    }
+
     for (i=0;i<10;i++) windgust_10m[i] = 0;
   }
+  
+  if(hours > 23 ){
+    
+    hours    = 0;
+    
+  }
+  
+  //Wait, and gather GPS data
+  smartdelay(500); 
+  
 
-  rainHour[minutes] = 0; //Zero out this minute's rainfall amount
-  rain5min[minutes_5m] = 0; //Zero out this minute's rain
-  windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
-
-  //if(gps.time.hour()==3 && minutes==30)
-  //  sendDailyRainSMS();
-
-  //Turn off stat LED
-  //digitalWrite(STAT2, LOW); 
-  //Wait 1 second, and gather GPS data
-  smartdelay(800); 
 }
 
 //While we delay for a given amount of time, gather GPS data
@@ -437,48 +540,7 @@ static void smartdelay(unsigned long ms)
 
 //Calculates each of the variables that wunderground is expecting
 void calcWeather()
-{
-  //Calc winddir
-  winddir = get_wind_direction();
-
-  //Calc windspeed
-  windspeedms = get_wind_speed();
-
-  //Calc windgustms
-  //Calc windgustdir
-  //Report the largest windgust today
-  windgustms = 0;
-  windgustdir = 0;
-
-  //Calc windspdms_avg2m
-  float temp = 0;
-  for(int i = 0 ; i < 120 ; i++)
-    temp += windspdavg[i];
-  temp /= 120.0;
-  windspdms_avg2m = temp;
-
-  //Calc winddir_avg2m
-  temp = 0; //Can't use winddir_avg2m because it's an int
-  for(int i = 0 ; i < 120 ; i++)
-    temp += winddiravg[i];
-  temp /= 120;
-  winddir_avg2m = temp;
-
-  //Calc windgustms_10m
-  //Calc windgustdir_10m
-  //Find the largest windgust in the last 10 minutes
-  windgustms_10m = 0;
-  windgustdir_10m = 0;
-  //Step through the 10 minutes  
-  for(int i = 0; i < 10 ; i++)
-  {
-    if(windgust_10m[i] > windgustms_10m)
-    {
-      windgustms_10m = windgust_10m[i];
-      windgustdir_10m = windgustdirection_10m[i];
-    }
-  }
-
+{  
   //Calc humidity
   humidity = myHumidity.readHumidity();
   if(myHumidity.readTemperature())
@@ -492,15 +554,7 @@ void calcWeather()
   }
 
   //Total rainfall for the day is calculated within the interrupt
-  //Calculate amount of rainfall for the last 5 minutes
-  rainin5min = 0;  
-  for(int i = 0 ; i < 5 ; i++)
-    rainin5min += rain5min[i];
-  //Calculate amount of rainfall for the last 60 minutes
-  rainin = 0;  
-  for(int i = 0 ; i < 60 ; i++)
-    rainin += rainHour[i];
-
+  
   //Calc pressure
   pressure = myPressure.readPressure();
 
@@ -577,23 +631,33 @@ int get_wind_direction()
   // Each threshold is the midpoint between adjacent headings. The output is degrees for that ADC reading.
   // Note that these are not in compass degree order! See Weather Meters datasheet for more information.
 
-  if (adc < 380) return (113);//NOT WORKING
-  else if (adc < 393) return (68);//NOT WORKING
-  else if (adc < 414) return (90);//NOT WORKING
-  else if (adc < 456) return (90);//(158);//E is 90 degrees CW from North = 0
-  else if (adc < 508) return (135);//SE is 135 degrees CW from North = 0
-  else if (adc < 551) return (180);//(203);//S is 180 degrees CW from North = 0
-  else if (adc < 615) return (45);//(180);//NE is 45 degrees CW from North = 0
-  else if (adc < 680) return (23);//NOT WORKING
-  else if (adc < 746) return (225);//(45);//SW is 225 degrees CW from North = 0
-  else if (adc < 801) return (248);//NOT WORKING
-  else if (adc < 833) return (0);//(225);//N is 0 degrees CW from North = 0
-  else if (adc < 878) return (338);//NOT WORKING
-  else if (adc < 913) return (325);//(0);//NW is 325 degrees CW from North = 0
-  else if (adc < 940) return (293);//NOT WORKING
-  else if (adc < 967) return (270);//(315);//W is 270 degrees CW from North = 0
-  else if (adc < 990) return (270);//NOT WORKING
-  else return (-1); // error, disconnected?
+//  if (adc < 380) return (113);//NOT WORKING
+//  else if (adc < 393) return (68);//NOT WORKING
+//  else if (adc < 414) return (90);//NOT WORKING
+//  else if (adc < 456) return (90);//(158);//E is 90 degrees CW from North = 0
+//  else if (adc < 508) return (135);//SE is 135 degrees CW from North = 0
+//  else if (adc < 551) return (180);//(203);//S is 180 degrees CW from North = 0
+//  else if (adc < 615) return (45);//(180);//NE is 45 degrees CW from North = 0
+//  else if (adc < 680) return (23);//NOT WORKING
+//  else if (adc < 746) return (225);//(45);//SW is 225 degrees CW from North = 0
+//  else if (adc < 801) return (248);//NOT WORKING
+//  else if (adc < 833) return (0);//(225);//N is 0 degrees CW from North = 0
+//  else if (adc < 878) return (338);//NOT WORKING
+//  else if (adc < 913) return (325);//(0);//NW is 325 degrees CW from North = 0
+//  else if (adc < 940) return (293);//NOT WORKING
+//  else if (adc < 967) return (270);//(315);//W is 270 degrees CW from North = 0
+//  else if (adc < 990) return (270);//NOT WORKING
+//  else return (-1); // error, disconnected?
+
+  if (adc < 350) return (113);//NOT WORKING
+  else if (adc < 440) return (90);  // E is 90 degrees CW from North = 0
+  else if (adc < 525) return (135); //SE is 135 degrees CW from North = 0
+  else if (adc < 635) return (180); // S is 180 degrees CW from North = 0
+  else if (adc < 755) return (45);  //NE is 45 degrees CW from North = 0
+  else if (adc < 855) return (225); //SW is 225 degrees CW from North = 0
+  else if (adc < 965) return (0);   // N is 0 degrees CW from North = 0
+  else if (adc < 1000) return (270);// W is 270 degrees CW from North = 0
+  else return (325);                //NW is 325 degrees CW from North = 0
 }
 
 
@@ -661,6 +725,8 @@ void printWeather()
   //PRINT TO LCD
   //--------------------------
 
+#ifdef LCD_REPORTING
+
   lcd.clear();
   lcd.print(F("Lon:"));
   lcd.print(gps.location.lng(), 6);
@@ -727,152 +793,138 @@ void printWeather()
   lcd.print(get_light_level());
   delay(2000);
 
+#endif
 
 }
 
-void sendSMS()
+void sendAlart()
 {
   /*****************************************************************************************************************
    * Sending an alert SMS 
    *****************************************************************************************************************/
-  lcd.clear();
   char sz[128];
   char rainbuf[128];
-  //Calculate amount of rainfall for the last 60 minutes
-  rainin = 0;  
-  for(int i = 0 ; i < 60 ; i++)
-    rainin += rainHour[i];
+  
   //Wait 1 second, and gather GPS data
   smartdelay(800); 
   dtostrf(rainin, 3, 2, rainbuf);
   //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
   sprintf(sz, "UO_LABUNORUWA\n%s mm/h",rainbuf);//[4]
-  //sprintf(sz, "UO_MAHAKANADARAWA\n%s mm/h",rainbuf);//[4]
+  //sprintf(sz, "UO_MAHAKANADARAWA\n%.3f mm/h",rainbuf);//[4]
   //sprintf(sz, "UO_ATHURUWELLA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "NALLAMUDAWA_MAWATHAWEWA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "THIRAPPANE_FARM\n%s mm/h",rainbuf);//[4]
-  //sprintf(sz, "UO_NUWARAWEWA_SALIYAPURA\n%s mm/h",rainbuf);//[4]
-  //sprintf(sz, "SRI_SADANANDA_PIRIVENA\n%s mm/h",rainbuf);//[4]
+  //sprintf(sz, "UO_NUWARAWEWA_SALIYAPURA\n%.3f mm/h",rainbuf);//[4]
+  //sprintf(sz, "SRI_SADANANDA_PIRIVENA\n%.3f mm/h",rainbuf);//[4]
 
-  //Serial.println(sz);
-  lcd.clear();
-  lcd.print(F("Module Initializing.."));
-  //Serial.println();
-  //Serial.println(F("Module Initializing..")); //Debug only to del
-  Status = Module.Init(9600);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("Module Ready."));
-    //Serial.println(F("Module Ready.")); //Debug only to del
-  }
-  else{ 
-    lcd.setCursor(0, 2);
-    lcd.print(F("Module Initializing Failed.")); 
-    //Serial.println(F("Module Initializing Failed.")); //Debug only to del
-    delay(1000);
-    lcd.clear();
-    lcd.print(F("ERROR : "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-    while(1){
-    }; 
-  }
+  
+  #ifdef UART_REPORTING
+  Serial.print(F("Alart Content : "));
+  Serial.println(sz);
+  #endif
+  
   Module.Refresh();
-  delay(10000);
+  delay(2000);
 
-  lcd.print(F("Sending an alert SMS (hourly rainfall"));
-  Status = Module.Send_SMS(Mobile_No1, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No1"));
-  }
-  else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No1: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
-  Status = Module.Send_SMS(Mobile_No2, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No2"));
-  }
-  else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No2: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
-  Status = Module.Send_SMS(Mobile_No3, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No3"));
-  }
-  else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No3: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
-  Status = Module.Send_SMS(Mobile_No4, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No4"));
-  }
-  else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No4: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
-  Status = Module.Send_SMS(Mobile_No5, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No5"));
-  }
-  else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No5: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
-  Status = Module.Send_SMS(Mobile_No6, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No6"));
-  }
-  else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No6: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
-  Status = Module.Send_SMS(Mobile_No7, sz);
-  if( Status == OK ){
-    lcd.setCursor(0, 2);
-    lcd.print(F("SMS Sent to No7"));
-  }
-  else{
-    lcd.clear();
-    lcd.print(F("SMS ERROR to No7: "));
-    lcd.setCursor(0, 2);
-    lcd.print(Status);
-  }
+//  #ifdef LCD_REPORTING
+//  lcd.clear();
+//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No1 .. "));
+//  #endif
+//  #ifdef UART_REPORTING
+//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No1 .."));
+//  #endif
+//  sendSMS(Mobile_No1, sz);
+//  delay(1000);
+//  
+//  #ifdef LCD_REPORTING
+//  lcd.clear();
+//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No2 .. "));
+//  #endif
+//  #ifdef UART_REPORTING
+//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No2 .."));
+//  #endif
+//  sendSMS(Mobile_No2, sz);
+//  delay(1000);
+
+  #ifdef LCD_REPORTING
+  lcd.clear();
+  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No3 .. "));
+  #endif
+  #ifdef UART_REPORTING
+  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No3 .."));
+  #endif
+  sendSMS(Mobile_No3, sz);
+  delay(1000);
+
+//  #ifdef LCD_REPORTING
+//  lcd.clear();
+//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No4 .. "));
+//  #endif
+//  #ifdef UART_REPORTING
+//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No4 .."));
+//  #endif
+//  sendSMS(Mobile_No4, sz);
+//  delay(1000);
+//
+//  #ifdef LCD_REPORTING
+//  lcd.clear();
+//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No5 .. "));
+//  #endif
+//  #ifdef UART_REPORTING
+//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No5 .."));
+//  #endif
+//  sendSMS(Mobile_No5, sz);
+//  delay(1000);
+//
+//  #ifdef LCD_REPORTING
+//  lcd.clear();
+//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No6 .. "));
+//  #endif
+//  #ifdef UART_REPORTING
+//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No6 .."));
+//  #endif
+//  sendSMS(Mobile_No6, sz);
+//  delay(1000);
+//
+//  #ifdef LCD_REPORTING
+//  lcd.clear();
+//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No7 .. "));
+//  #endif
+//  #ifdef UART_REPORTING
+//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No7 .."));
+//  #endif
+//  sendSMS(Mobile_No7, sz);
+
+  
   /*****************************************************************************************************************
    * Finished Sending an alert SMS 
    *****************************************************************************************************************/
 }
 //
-//void sendDailyRainSMS()
-//{
+void sendDailyRainSMS(){
 //  /*****************************************************************************************************************
 //   * Sending an alert SMS 
 //   *****************************************************************************************************************/
 //  lcd.clear();
-//  char sz[128];
-//  char rainbuf[128];
-//  dailyrainin=0.0;
-//  dtostrf(dailyrainin, 3, 2, rainbuf);
+  char sz[255];
+  char rainbuf[128];
+  
+  dtostrf(rain_day, 4, 2, rainbuf);
+  
+  smartdelay(10000); //Wait 10 seconds, and gather GPS data
+  
+  sprintf(sz, "MWS Test\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\n%s mm/d", gps.date.year(), gps.date.month(), gps.date.day(), gps.time.hour(), gps.time.minute(), gps.time.second(), rainbuf);
+  
+  #ifdef LCD_REPORTING
+  lcd.clear();
+  lcd.print(F("Sending daily SMS to Mobile_No3 .. "));
+  #endif
+  #ifdef UART_REPORTING
+  Serial.print(F("Sending daily SMS to Mobile_No3 .. "));
+  #endif
+  sendSMS(Mobile_No3, sz);
+  delay(1000);
+  
 //  //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
 //  //sprintf(sz, "UO_LABUNORUWA\n%s mm/d",rainbuf);//[4]
 //  //sprintf(sz, "UO_MAHAKANADARAWA\n%s mm/d",rainbuf);//[4]
@@ -914,7 +966,7 @@ void sendSMS()
 //    lcd.setCursor(0, 2);
 //    lcd.print(Status);
 //  }
-//}
+}
 
 //void send2Server(){
 ///*****************************************************************************************************************
@@ -954,12 +1006,80 @@ void sendSMS()
 //  };  
 //}
 
+int GSM_Module_Init(){
 
+  #ifdef LCD_REPORTING
+  lcd.clear();
+  lcd.print(F("Module Initializing.."));
+  #endif
+  #ifdef UART_REPORTING
+  Serial.println();
+  Serial.println(F("Module Initializing..")); 
+  #endif
 
+  Status = Module.Init(9600);
+  
+  if( Status == OK ){
+    
+    #ifdef LCD_REPORTING
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Ready."));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.println(F("Module Ready.")); 
+    #endif
 
+  }
+  else{
+   
+    #ifdef LCD_REPORTING    
+    lcd.setCursor(0, 2);
+    lcd.print(F("Module Initializing Failed."));
+    delay(1000);
+    lcd.clear();
+    lcd.print(F("ERROR : "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+    #endif
+    #ifdef UART_REPORTING 
+    Serial.println(F("Module Initializing Failed.")); 
+    Serial.print(F("ERROR : "));
+    Serial.println(Status);
+    #endif
+  }
+  
+  return Status;
+  
+}
 
+void sendSMS(String Mobile_No, String message){
+  
+  Status = Module.Send_SMS(Mobile_No, message);
+  if( Status == OK ){
 
+    #ifdef LCD_REPORTING    
+    lcd.setCursor(0, 2);
+    lcd.print(F("SMS Sent"));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.println(F("SMS Sent"));
+    #endif
 
+  }else{
+    
+    #ifdef LCD_REPORTING    
+    lcd.clear();
+    lcd.print(F("SMS ERROR : "));
+    lcd.setCursor(0, 2);
+    lcd.print(Status);
+    #endif
+    #ifdef UART_REPORTING
+    Serial.print(F("SMS ERROR : "));
+    Serial.println(Status);
+    #endif    
+  }
+
+}
 
 
 

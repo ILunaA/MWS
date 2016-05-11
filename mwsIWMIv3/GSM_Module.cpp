@@ -54,15 +54,15 @@ int GSM_Module::Init(int baud){
     }
     else{
 
-      for( int attempts = 0 ; attempts < 20 ; attempts++){
+      for( int attempts = 0 ; attempts < 5 ; attempts++){
 
         //switch on
         //NOT NEEDED FOR small breakout SIM900a
-        //digitalWrite(SIM900_Power_Pin, LOW);
-        //delay(1000);
-        //digitalWrite(SIM900_Power_Pin, HIGH);
-        //delay(3000);
-        //digitalWrite(SIM900_Power_Pin, LOW);
+        digitalWrite(SIM900_Power_Pin, LOW);
+        delay(1000);
+        digitalWrite(SIM900_Power_Pin, HIGH);
+        delay(3000);
+        digitalWrite(SIM900_Power_Pin, LOW);
         //END OF NOT NEEDED FOR small breakout SIM900a
         delay(6000);
 
