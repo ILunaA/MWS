@@ -105,8 +105,18 @@ int GSM_Module::Init(int baud){
   }  
 }
 
-void GSM_Module::Refresh(){
+void GSM_Module::Close(){
 
+  for(int t=0 ; t<500 ; t++ ){
+    Listen();
+    delay(10);
+  }
+  cell.end();
+  
+}
+
+void GSM_Module::Refresh(){
+  
   Module_Waiting_Flag  = 0;
   String_Flag          = 0;
   incoming_char        = 0;

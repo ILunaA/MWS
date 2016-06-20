@@ -19,6 +19,7 @@ class GSM_Module{
         GSM_Module(uint8_t Type);
         int Init(int baud); 
         void Listen();
+        void Close();
         void Refresh(); 
         bool String_Received();
         bool Module_Waiting();

@@ -19,7 +19,7 @@
  */
  
 //#define LCD_REPORTING
-#define UART_REPORTING
+//#define UART_REPORTING
 
 #include <Wire.h> //I2C needed for sensors
 #include "MPL3115A2.h" //Pressure sensor
@@ -46,12 +46,14 @@ String Mobile_No2 = "+94713805660";          // IrDep Lasindu Mobile Number 2 wh
 String Mobile_No3 = "+94776141305";          // IWMI Lahiru Mobile Number 3 which the SMS Sends 
 String Mobile_No4 = "+94716890308";          // IrDep Prasanna Mobile Number 4 which the SMS Sends 
 String Mobile_No5 = "+94718025479";          // IrDep Marapana Mobile Number 5 which the SMS Sends 
-String Mobile_No6 = "+94716685855";          // IrDep Karunarathna Mobile Number 6 which the SMS Sends 
-String Mobile_No7 = "+94767201637";          // IWMI Yann Mobile Number 7 which the SMS Sends 
+String Mobile_No6 = "+94716685855";          // IrDep Karun'arathna Mobile Number 6 which the SMS Sends 
+String Mobile_No7 = "+94767201637";          // IWMI Yann Mobile Number 7 which the SMS Sends
+String Mobile_No8 = "+94774496950";          // IWMI David Mobile Number 8 which the SMS Sends 
+ 
 
-String Test_SMS  = "IWMI MWS v3 Testing";
+//String Test_SMS  = "IWMI MWS v3 Testing";
 //String Test_SMS  = "IWMI MWS v3 Station initializing at HOTEL_TEST";    // Test content of the SMS
-//String Test_SMS  = "IWMI MWS v3 Station initializing at UO_LABUNORUWA";    // Test content of the SMS
+String Test_SMS  = "IWMI MWS v3 Station initializing at UO_LABUNORUWA";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at UO_MAHAKANADARAWA";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at UO_ATHURUWELLA";    // Test content of the SMS
 //String Test_SMS  = "IWMI MWS v3 Station initializing at NALLAMUDAWA_MAWATHAWEWA";    // Test content of the SMS
@@ -94,18 +96,18 @@ const byte REFERENCE_3V3 = A3;
 
 //Global Variables
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-long lastMSecond     = 0; //The millis counter to see when a second rolls by
-long loopMSecond     = 0; //time it took to loop once in millis
-long loopMSecond_Rem = 0; // Remining millis of Second calcultion.
-byte seconds         = 0; //When it hits 60, increase the current minute
-byte last_seconds    = 0;
-int  loop_seconds    = 0;
-byte seconds_2m      = 0; //Keeps track of the "wind speed/dir avg" over last 2 minutes array of data
-byte minutes         = 0; //Keeps track of where we are in various arrays of data
-byte minutes_5m      = 0; //Keeps track of where we are in rain5min over last 5 minutes array of data
-byte minutes_10m     = 0; //Keeps track of where we are in wind gust/dir over last 10 minutes array of data
-byte hours           = 0; 
-byte last_hour       = 0;
+long lastMSecond      = 0; //The millis counter to see when a second rolls by
+long loopMSecond      = 0; //time it took to loop once in millis
+long loopMSecond_Rem  = 0; // Remining millis of Second calcultion.
+int  seconds          = 0; //When it hits 60, increase the current minute
+byte loop_seconds     = 0;
+byte last_10_seconds  = 0;
+byte ten_sec_count    = 0;
+byte ten_second_5m    = 0; //Keeps track of the "wind speed/dir avg" over last 5 minutes array of data
+int  minutes          = 0; //Keeps track of where we are in various arrays of data
+byte minutes_5m       = 0; //Keeps track of where we are in rain5min over last 5 minutes array of data
+int  hours            = 0; 
+byte last_hour        = 0;
 
 long lastWindCheck        = 0;
 volatile long lastWindIRQ = 0;
@@ -119,31 +121,27 @@ volatile byte windClicks  = 0;
 //Rain over the past hour (store 1 per minute)
 //Total rain over date (store one per day)
 
-float windspdavg[120]        = {0.0}; //120 bytes to keep track of 2 minute average
-int winddiravg[120]          = {0.0}; //120 ints to keep track of 2 minute average
-float windgust_10m[10]       = {0.0}; //10 floats to keep track of 10 minute max
-int windgustdirection_10m[10]= {0.0}; //10 ints to keep track of 10 minute max
-volatile float rainHour[60]  ={0.0}; //60 floating numbers to keep track of 60 minutes of rain
-volatile float rainDay[24]   ={0.0}; //24 floating numbers to keep track of 24 hours of rain
-volatile float rain5min[5]   ={0.0}; //5 floating numbers to keep track of 5 minutes of rain
+float windspdavg[30]         = {0.0}; //30 bytes to keep track of 2 minute average
+int winddiravg[30]           = {0}; //30 ints to keep track of 2 minute average
+
+volatile float rainHour = 0.0; //60 floating numbers to keep track of 60 minutes of rain
+volatile float rainDay  = 0.0; //24 floating numbers to keep track of 24 hours of rain
+volatile float rain5min = 0.0; //5 floating numbers to keep track of 5 minutes of rain
 
 //These are all the weather values that wunderground expects:
-int winddir           = 0; // [0-360 instantaneous wind direction]
+int   winddir         = 0; // [0-360 instantaneous wind direction]
 float windspeedms     = 0.0; // [mph instantaneous wind speed]
 float windgustms      = 0.0; // [mph current wind gust, using software specific time period]
-int windgustdir       = 0; // [0-360 using software specific time period]
-float windspdms_avg2m = 0.0; // [mph 2 minute average wind speed mph]
-int winddir_avg2m     = 0; // [0-360 2 minute average wind direction]
-float windgustms_10m  = 0.0; // [mph past 10 minutes wind gust mph ]
-int windgustdir_10m   = 0; // [0-360 past 10 minutes wind gust direction]
+int   windgustdir     = 0; // [0-360 using software specific time period]
+float windspdms_avg5m = 0.0; // [mph 5 minute average wind speed mph]
+int   winddir_avg5m   = 0; // [0-360 5 minute average wind direction]
+float windgust_5m     = 0.0; // [mph past 5 minutes wind gust mph ]
+int   windgustdir_5m  = 0; // [0-360 past 5 minutes wind gust direction]
 float humidity        = 0.0; // [%]
 float tempf           = 0.0; // [temperature F]
-float rainin          = 0.0; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
-float rain_day        = 0.0;
-volatile float dailyrainin = 0.0; // [rain inches so far today in local time]
-float rainin5min      = 0.0; // [rain inches so far last 5 minutes in local time]
-//float baromin = 30.03;// [barom in] - It's hard to calculate baromin locally, do this in the agent
 float pressure        = 0.0;
+
+//float baromin = 30.03;// [barom in] - It's hard to calculate baromin locally, do this in the agent
 //float dewptf; // [dewpoint F] - It's hard to calculate dewpoint locally, do this in the agent
 
 float batt_lvl = 11.8; //[analog value from 0 to 1023]
@@ -152,8 +150,8 @@ float light_lvl = 455; //[analog value from 0 to 1023]
 int Rainindi=0;
 //Variables used for GPS
 //unsigned long age;
-//int year;
-//byte month, day, hour, minute, second, hundredths;
+int gps_year, gps_month, gps_day;
+int seconds_new, minutes_new, hours_new, gps_year_new, gps_month_new, gps_day_new; 
 
 //Calibrate rain bucket here
 //Rectangle raingauge from Sparkfun.com weather sensors
@@ -183,28 +181,17 @@ void rainIRQ()
 
     if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
   {
-    dailyrainin += rain_bucket_mm; 
-    rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
-    rain5min[minutes_5m] += rain_bucket_mm; // increase this 5 mnts amout of rain
+    rainDay  += rain_bucket_mm; 
+    rainHour += rain_bucket_mm; //Increase this minute's amount of rain
+    rain5min += rain_bucket_mm; // increase this 5 mnts amout of rain
     rainlast = raintime; // set up for next event
     #ifdef UART_REPORTING
     Serial.print(F("RainIRQ! "));
-    Serial.print(F("rainHour["));
-    Serial.print(minutes);
-    Serial.print(F("] : "));
-    Serial.println(rainHour[minutes]);
+    Serial.print(F("Rain(5m) : "));
+    Serial.println(rain5min);
     #endif
   }
 
-  //Rain or not (1 or 0)
-  if(rainin > 0)
-  {
-    Rainindi=1;
-    Rainindtime = millis();
-  }else{
-    Rainindi=0; 
-    Rainindlast = Rainindtime;
-  }
 }
 
 void wspeedIRQ()
@@ -245,9 +232,9 @@ void setup()
 
   // Start software serial for GPS
   // Begin listening to GPS over software serial at 9600. This should be the default baud of the module.
-  ss.begin(9600); 
+//  ss.begin(9600); 
   Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
-  Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
+  ;Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg5m,winddir_avg5m,windgustms_5m,windgustdir_5m"));
   Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,rainindicate,rain5min,pressure,batt_lvl,light_lvl"));
 
   // For Arduino UNO Only
@@ -275,21 +262,33 @@ void setup()
 
   // turn on interrupts
   interrupts();
+
+  delay(60000);
 //  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
 //  delay(1000);
 //  digitalWrite(STAT2, LOW); //Blink stat LED
-  smartdelay(60000); //Wait 60 seconds, and gather GPS data
-  minutes = gps.time.minute();
-  minutes_5m = (gps.time.minute())%5;
-  minutes_10m = (gps.time.minute())%10;
-  seconds = gps.time.second();
-  seconds_2m = gps.time.second();
-  hours = gps.time.hour();
-  
+
+//  smartdelay(60000); //Wait 60 seconds, and gather GPS data
+//  minutes       = gps.time.minute();
+//  minutes_5m    = (gps.time.minute())%5;
+//  seconds       = gps.time.second();
+//  hours         = gps.time.hour();
+//  gps_year      = gps.date.year();
+//  gps_month     = gps.date.month();
+//  gps_day       = gps.date.day();
+
 //  digitalWrite(STAT2, HIGH); //Blink stat LED 1 second
 //  delay(1000);
 //  digitalWrite(STAT2, LOW); //Blink stat LED
-//  lcd.print("Weather Station online!");
+
+  #ifdef LCD_REPORTING  
+  lcd.begin();
+  lcd.backlight();
+  lcd.print("Weather Station online!");
+  #endif
+  #ifdef UART_REPORTING
+  Serial.println(F("Weather Station online!"));
+  #endif
 
   //GSM COMS MODULE
   /*****************************************************************************************************************
@@ -306,7 +305,7 @@ void setup()
     while(1){
     };
   }
-     
+  
   Module.Refresh();
   delay(10000);
   /*****************************************************************************************************************
@@ -323,26 +322,47 @@ void setup()
   Serial.println(F("Sending a Test SMS"));
   #endif
   
-//  Status = Module.Send_SMS(Mobile_No1, Test_SMS);//Soumya
-//  Status = Module.Send_SMS(Mobile_No2, Test_SMS);//Lasindu
-//  Status = Module.Send_SMS(Mobile_No3, Test_SMS);//Lahiru
-//  Status = Module.Send_SMS(Mobile_No4, Test_SMS);//Prasanna
-//  Status = Module.Send_SMS(Mobile_No5, Test_SMS);//Marapana
-//  Status = Module.Send_SMS(Mobile_No6, Test_SMS);//Karunarathna
-//  Status = Module.Send_SMS(Mobile_No7, Test_SMS);//Yann
-
-//  sendSMS(Mobile_No1, Test_SMS);//Soumya
-//  sendSMS(Mobile_No2, Test_SMS);//Lasindu
+  sendSMS(Mobile_No1, Test_SMS);//Soumya
+  delay(1000);
+  sendSMS(Mobile_No2, Test_SMS);//Lasindu
+  delay(1000);
   sendSMS(Mobile_No3, Test_SMS);//Lahiru
-//  sendSMS(Mobile_No4, Test_SMS);//Prasanna
-//  sendSMS(Mobile_No5, Test_SMS);//Marapana
-//  sendSMS(Mobile_No6, Test_SMS);//Karunarathna
-//  sendSMS(Mobile_No7, Test_SMS);//Yann
-  
+  delay(1000);
+  sendSMS(Mobile_No4, Test_SMS);//Prasanna
+  delay(1000);
+  sendSMS(Mobile_No5, Test_SMS);//Marapana
+  delay(1000);
+  sendSMS(Mobile_No6, Test_SMS);//Karunarathna
+  delay(1000);
+  sendSMS(Mobile_No7, Test_SMS);//Yann
+  delay(1000);
+  sendSMS(Mobile_No8, Test_SMS);//David
+
+  Module.Refresh();
+  delay(1000);
+  Module.Close();
+  ss.begin(9600);
+
+  delay(1000);
+
+  smartdelay(60000); //Wait 60 seconds, and gather GPS data
+  minutes       = gps.time.minute();
+  minutes_5m    = (gps.time.minute())%5;
+  seconds       = gps.time.second();
+  hours         = gps.time.hour();
+  gps_year      = gps.date.year();
+  gps_month     = gps.date.month();
+  gps_day       = gps.date.day();
+  smartdelay(60000);
+
+
+   
   /*****************************************************************************************************************
    * Finished Sending a test SMS 
    *****************************************************************************************************************/
-   lastMSecond = millis();
+  
+  lastMSecond = millis();
+   
 }
 
 void loop()
@@ -354,27 +374,44 @@ void loop()
   loop_seconds    = loopMSecond/1000; 
   loopMSecond_Rem = loopMSecond%1000;
   
-  seconds_2m += loop_seconds;
-  seconds    += loop_seconds;
+  seconds         += loop_seconds; 
   
   if(seconds > 59){
     seconds     = seconds%60;
     minutes     ++;
     minutes_5m  ++;
-    minutes_10m ++;
   }
   
-  //Take a speed and direction reading every second for 2 minute average
-  if(last_seconds != seconds){ 
-    currentSpeed           = get_wind_speed();
-    currentDirection       = get_wind_direction();
-    windspdavg[seconds_2m] = currentSpeed;
-    winddiravg[seconds_2m] = currentDirection;
+  ten_second_5m   = ((seconds/10) + (minutes%5)*6);
+  
+  //Take a speed and direction reading every  10 second for 5 minute average
+  if(last_10_seconds != ten_second_5m){ 
+    
+    currentSpeed              = get_wind_speed();
+    currentDirection          = get_wind_direction();
+    
+    windspdavg[ten_second_5m] = currentSpeed;
+    winddiravg[ten_second_5m] = currentDirection;
+      
+    //Check to see if this is a gust for the minute
+    if(currentSpeed > windgust_5m)
+    {
+      windgust_5m     = currentSpeed;
+      windgustdir_5m  = currentDirection;
+    }
+
+    //Check to see if this is a gust for the day
+    if(currentSpeed > windgustms)
+    {
+      windgustms  = currentSpeed;
+      windgustdir = currentDirection;
+    }
     
     #ifdef UART_REPORTING 
     char time_s[32];
-    sprintf(time_s, "%02d:%02d:%02d", hours, minutes, seconds);
+    sprintf(time_s, " %02d:%02d:%02d ", hours, minutes, seconds);
     Serial.print(time_s); 
+    Serial.print(ten_second_5m);
     Serial.print(F("\t"));
     Serial.print(F("Wind Speed :")); 
     Serial.print(currentSpeed);
@@ -393,91 +430,67 @@ void loop()
     }
     #endif
  
-    //Check to see if this is a gust for the minute
-    if(currentSpeed > windgust_10m[minutes_10m])
-    {
-      windgust_10m[minutes_10m] = currentSpeed;
-      windgustdirection_10m[minutes_10m] = currentDirection;
-    }
-
-    //Check to see if this is a gust for the day
-    if(currentSpeed > windgustms)
-    {
-      windgustms  = currentSpeed;
-      windgustdir = currentDirection;
-    }
-    last_seconds = seconds;
+    last_10_seconds  = ten_second_5m;
+    ten_sec_count    ++;
   }
   
-  if(seconds_2m > 119){
-    seconds_2m = seconds_2m%120;
-    
-    //Calc the wind speed and direction every second for 120 second to get 2 minute average
-    //Calc windspdms_avg2m
-    float temp = 0;
-    for(int i = 0 ; i < 120 ; i++){
-      temp += windspdavg[i];
-      windspdavg[i] = 0;
-    }
-    temp /= 120.0;
-    windspdms_avg2m = temp;
-
-    //Calc winddir_avg2m
-    temp = 0; //Can't use winddir_avg2m because it's an int
-    for(int i = 0 ; i < 120 ; i++){
-      temp += winddiravg[i];
-      winddiravg[i] = 0;  
-    }
-    temp /= 120;
-    winddir_avg2m = temp;
-    
-    #ifdef UART_REPORTING 
-    Serial.print(F("Wind Speed Avg(2min) :")); 
-    Serial.print(windspdms_avg2m);
-    Serial.print(F("\t"));
-    Serial.print(F("Wind Direction Avg(2min) : :")); 
-    Serial.println(winddir_avg2m);
-    #endif
-
-  }
  
   if(minutes > 59) {  
+    
     minutes = minutes%60;
-    hours ++; 
-    //Calculate amount of rainfall for the last 60 minutes
-    rainin = 0;  
-
-    for(int i = 0 ; i < 60 ; i++){
-     rainin += rainHour[i];
-     rainHour[i] = 0;
-    }
+    hours ++;
+    
     #ifdef UART_REPORTING 
-    Serial.print(F("Hourly Rain (rainin) :")); 
-    Serial.println(rainin);
+    Serial.print(F("Hourly Rain :")); 
+    Serial.println(rainHour);
     #endif
-    
-    rainDay[hours] = rainin; 
-    
-    if(rainin > 10.0){ //SMS Alert if hourly rain > 10 mm/h, Modified after Lasindu's request 22 April 2016
+     
+    if(rainHour > 10.0){ //SMS Alert if hourly rain > 10 mm/h, Modified after Lasindu's request 22 April 2016
       #ifdef UART_REPORTING 
-      Serial.println(F("Rain Exceeded Threshold, Sending Alert..")); 
+      Serial.println(F("Rain Exceeded Threshold, Sending Alart..")); 
       #endif
       sendAlart();
     }
+        
     //Hourly online reporting
     //Send temperature&humidity to PhP Server (to be enhanced)
     //send2Server();
     
     if(hours == 2){
       
-     rain_day = 0;
-    
-      for(int i = 0 ; i < 24 ; i++){
-        rain_day += rainDay[i];
-        rainDay[i] = 0.0;
-      }
       sendDailyRainSMS();
-    } 
+      rainDay = 0;
+      
+    }
+
+    rainHour = 0; 
+
+    smartdelay(60000); //Wait 60 seconds, and gather GPS data
+
+    seconds_new   = gps.time.second();
+    minutes_new   = gps.time.minute();
+    hours_new     = gps.time.hour();
+    gps_year_new  = gps.date.year();
+    gps_month_new = gps.date.month();
+    gps_day_new   = gps.date.day();
+
+    smartdelay(60000);
+
+    if ((gps_year_new > gps_year) || ((gps_month_new > gps_month) && (gps_year_new >= gps_year)) || ((gps_day_new > gps_day) && (gps_month_new >= gps_month)) || ((hours_new > hours) && (gps_day_new >= gps_day)) || ((minutes_new > minutes) && (hours_new >= hours))){
+        
+      minutes       = minutes_new;
+      minutes_5m    = minutes_new%5;
+      seconds       = seconds_new;
+      hours         = hours_new;
+      gps_year      = gps_year_new;
+      gps_month     = gps_month_new;
+      gps_day       = gps_day_new;
+
+      #ifdef UART_REPORTING
+      Serial.println(F("GPS Date Updated"));
+      #endif
+    
+    }
     
   }
   
@@ -485,32 +498,58 @@ void loop()
     
     minutes_5m = minutes_5m%5;
     
-    //Calculate amount of rainfall for the last 5 minutes
-    rainin5min = 0;  
-    for(int i = 0 ; i < 5 ; i++) rainin5min += rain5min[i];
-    for (i=0;i<5;i++) rain5min[i] = 0;
+    //Calc the wind speed and direction every  10 seconds for 120 second to get 5 minute average
+    //Calc windspdms_avg5m
+    float temp = 0;
+    for(int i = 0 ; i < 30 ; i++){
+      temp += windspdavg[i];
+      windspdavg[i] = 0;
+    }
+    temp /= ten_sec_count;
+    windspdms_avg5m = temp;
+
+    //Calc winddir_avg5m
+    temp = 0; //Can't use winddir_avg2m because it's an int
+    for(int i = 0 ; i < 30 ; i++){
+      temp += winddiravg[i];
+      winddiravg[i] = 0;  
+    }
+    temp /= ten_sec_count;
+    winddir_avg5m = temp;  
+    
+    
+    #ifdef UART_REPORTING 
+    Serial.print(F("Wind Spd Avg (5min):")); 
+    Serial.println(windspdms_avg5m);
+    Serial.print(F("Wind Gust    (5min):")); 
+    Serial.println(windgust_5m);
+    Serial.print(F("Wind Dir Avg (5min):")); 
+    Serial.println(winddir_avg5m);
+    Serial.print(F("Wind Gust Dir(5min):")); 
+    Serial.println(windgustdir_5m);
+    Serial.print(F("Rain Total   (5min):")); 
+    Serial.println(rain5min);
+    #endif
+    //Rain or not (1 or 0)
+    if(rain5min > 0)
+    {
+      Rainindi=1;
+      Rainindtime = millis();
+    }else{
+      Rainindi=0; 
+      Rainindlast = Rainindtime;
+    }
+    
+    
     //Report all readings
     printWeather(); 
-  }
-  
-  if(minutes_10m > 9){
     
-    minutes_10m = minutes_10m%10;
+    windgust_5m      = 0;
+    windgustdir_5m   = 0;
+    rain5min         = 0;
+    ten_sec_count    = 0;
 
-    //Find the largest windgust in the last 10 minutes
-    windgustms_10m = 0;
-    windgustdir_10m = 0;
-    //Step through the 10 minutes  
-    for(int i = 0; i < 10 ; i++)
-    {
-      if(windgust_10m[i] > windgustms_10m)
-      {
-        windgustms_10m  = windgust_10m[i];
-        windgustdir_10m = windgustdirection_10m[i];
-      }
-    }
-
-    for (i=0;i<10;i++) windgust_10m[i] = 0;
+    
   }
   
   if(hours > 23 ){
@@ -520,7 +559,7 @@ void loop()
   }
   
   //Wait, and gather GPS data
-  smartdelay(500); 
+  smartdelay(2000); 
   
 
 }
@@ -678,11 +717,11 @@ void printWeather()
 
   char sz[32];
   Serial.print(",");
-  sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());//[4]
+  sprintf(sz, "%02d-%02d-%02d", gps_year, gps_month, gps_day);//[4]
   Serial.print(sz);
 
   Serial.print(",");
-  sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());//[5]
+  sprintf(sz, "%02d:%02d:%02d", hours, minutes, seconds);//[5]
   Serial.print(sz); 
 
   Serial.print(",");
@@ -694,25 +733,25 @@ void printWeather()
   Serial.print(",");
   Serial.print(windgustdir);//[9]
   Serial.print(",");
-  Serial.print(windspdms_avg2m, 1);//[10]
+  Serial.print(windspdms_avg5m, 1);//[10]
   Serial.print(",");
-  Serial.print(winddir_avg2m);//[11]
+  Serial.print(winddir_avg5m);//[11]
   Serial.print(",");
-  Serial.print(windgustms_10m, 1);//[12]
+  Serial.print(windgust_5m, 1);//[12]
   Serial.print(",");
-  Serial.print(windgustdir_10m);//[13]
+  Serial.print(windgustdir_5m);//[13]
   Serial.print(",");
   Serial.print(humidity, 1);//[14]
   Serial.print(",");
   Serial.print(tempf, 1);//[15] Celsius
   Serial.print(",");
-  Serial.print(rainin, 3);//[16] hourly
+  Serial.print(rainHour, 3);//[16] hourly
   Serial.print(",");
-  Serial.print(dailyrainin, 3);//[17]
+  Serial.print(rainDay, 3);//[17]
   Serial.print(",");
   Serial.print(Rainindi,1);//[18] 5min indicatior (flag 0/1)
   Serial.print(",");
-  Serial.print(rainin5min,3);//[19] 5min rain (mm/5min)
+  Serial.print(rain5min,3);//[19] 5min rain (mm/5min)
   Serial.print(",");
   Serial.print(pressure, 2);//[20]
   Serial.print(",");
@@ -766,17 +805,17 @@ void printWeather()
 
   lcd.clear();
   lcd.print("R:");
-  lcd.print(rainin5min,2);
+  lcd.print(rain5min,2);
   lcd.print(" mm/5min");
   lcd.setCursor(0, 2);
   lcd.print(F("R:"));
-  lcd.print(rainin,2);
+  lcd.print(rainHour,2);
   lcd.print(F(" mm/h"));
   delay(5000);
 
   lcd.clear();
   lcd.print("R:");
-  lcd.print(dailyrainin,2);
+  lcd.print(rainDay,2);
   lcd.print("(mm/d)");
   lcd.setCursor(0, 2);
   lcd.print(F("P:"));
@@ -805,97 +844,113 @@ void sendAlart()
   char sz[128];
   char rainbuf[128];
   
-  //Wait 1 second, and gather GPS data
-  smartdelay(800); 
-  dtostrf(rainin, 3, 2, rainbuf);
+  dtostrf(rainHour, 3, 2, rainbuf);
   //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
   sprintf(sz, "UO_LABUNORUWA\n%s mm/h",rainbuf);//[4]
-  //sprintf(sz, "UO_MAHAKANADARAWA\n%.3f mm/h",rainbuf);//[4]
+  //sprintf(sz, "UO_MAHAKANADARAWA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "UO_ATHURUWELLA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "NALLAMUDAWA_MAWATHAWEWA\n%s mm/h",rainbuf);//[4]
   //sprintf(sz, "THIRAPPANE_FARM\n%s mm/h",rainbuf);//[4]
-  //sprintf(sz, "UO_NUWARAWEWA_SALIYAPURA\n%.3f mm/h",rainbuf);//[4]
-  //sprintf(sz, "SRI_SADANANDA_PIRIVENA\n%.3f mm/h",rainbuf);//[4]
+  //sprintf(sz, "UO_NUWARAWEWA_SALIYAPURA\n%s mm/h",rainbuf);//[4]
+  //sprintf(sz, "SRI_SADANANDA_PIRIVENA\n%s mm/h",rainbuf);//[4]
 
   
   #ifdef UART_REPORTING
   Serial.print(F("Alart Content : "));
   Serial.println(sz);
   #endif
+
+  ss.end();
+  delay(500);
+  if(GSM_Module_Init() == OK){
+  
+    #ifdef LCD_REPORTING
+    lcd.clear();
+    lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No1 .. "));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No1 .."));
+    #endif
+    sendSMS(Mobile_No1, sz);
+    delay(1000);
+  
+    #ifdef LCD_REPORTING
+    lcd.clear();
+    lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No2 .. "));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No2 .."));
+    #endif
+    sendSMS(Mobile_No2, sz);
+    delay(1000);
+
+    #ifdef LCD_REPORTING
+  '  lcd.clear();
+    lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No3 .. "));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No3 .."));
+    #endif
+    sendSMS(Mobile_No3, sz);
+    delay(1000);
+  
+    #ifdef LCD_REPORTING
+    lcd.clear();
+    lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No4 .. "));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No4 .."));
+    #endif
+    sendSMS(Mobile_No4, sz);
+    delay(1000);
+
+    #ifdef LCD_REPORTING
+    lcd.clear();
+    lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No5 .. "));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No5 .."));
+    #endif
+    sendSMS(Mobile_No5, sz);
+    delay(1000);
+
+    #ifdef LCD_REPORTING
+    lcd.clear();
+    lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No6 .. "));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No6 .."));
+    #endif
+    sendSMS(Mobile_No6, sz);
+    delay(1000);
+
+    #ifdef LCD_REPORTING
+    lcd.clear();
+    lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No7 .. "));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No7 .."));
+    #endif
+    sendSMS(Mobile_No7, sz);
+    delay(1000);
+
+    #ifdef LCD_REPORTING
+    lcd.clear();
+    lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No8 .. "));
+    #endif
+    #ifdef UART_REPORTING
+    Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No8 .."));
+    #endif
+    sendSMS(Mobile_No8, sz);
+    delay(1000);
+  }
   
   Module.Refresh();
-  delay(2000);
-
-//  #ifdef LCD_REPORTING
-//  lcd.clear();
-//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No1 .. "));
-//  #endif
-//  #ifdef UART_REPORTING
-//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No1 .."));
-//  #endif
-//  sendSMS(Mobile_No1, sz);
-//  delay(1000);
-//  
-//  #ifdef LCD_REPORTING
-//  lcd.clear();
-//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No2 .. "));
-//  #endif
-//  #ifdef UART_REPORTING
-//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No2 .."));
-//  #endif
-//  sendSMS(Mobile_No2, sz);
-//  delay(1000);
-
-  #ifdef LCD_REPORTING
-  lcd.clear();
-  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No3 .. "));
-  #endif
-  #ifdef UART_REPORTING
-  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No3 .."));
-  #endif
-  sendSMS(Mobile_No3, sz);
   delay(1000);
+  Module.Close();
+  delay(500);
+  ss.begin(9600);
 
-//  #ifdef LCD_REPORTING
-//  lcd.clear();
-//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No4 .. "));
-//  #endif
-//  #ifdef UART_REPORTING
-//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No4 .."));
-//  #endif
-//  sendSMS(Mobile_No4, sz);
-//  delay(1000);
-//
-//  #ifdef LCD_REPORTING
-//  lcd.clear();
-//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No5 .. "));
-//  #endif
-//  #ifdef UART_REPORTING
-//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No5 .."));
-//  #endif
-//  sendSMS(Mobile_No5, sz);
-//  delay(1000);
-//
-//  #ifdef LCD_REPORTING
-//  lcd.clear();
-//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No6 .. "));
-//  #endif
-//  #ifdef UART_REPORTING
-//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No6 .."));
-//  #endif
-//  sendSMS(Mobile_No6, sz);
-//  delay(1000);
-//
-//  #ifdef LCD_REPORTING
-//  lcd.clear();
-//  lcd.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No7 .. "));
-//  #endif
-//  #ifdef UART_REPORTING
-//  Serial.print(F("Sending an alert SMS (hourly rainfall) to Mobile_No7 .."));
-//  #endif
-//  sendSMS(Mobile_No7, sz);
-
-  
   /*****************************************************************************************************************
    * Finished Sending an alert SMS 
    *****************************************************************************************************************/
@@ -909,63 +964,38 @@ void sendDailyRainSMS(){
   char sz[255];
   char rainbuf[128];
   
-  dtostrf(rain_day, 4, 2, rainbuf);
+  dtostrf(rainDay, 4, 2, rainbuf);
   
   smartdelay(10000); //Wait 10 seconds, and gather GPS data
   
-  sprintf(sz, "MWS Test\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\n%s mm/d", gps.date.year(), gps.date.month(), gps.date.day(), gps.time.hour(), gps.time.minute(), gps.time.second(), rainbuf);
+  sprintf(sz, "UO_LABUNORUWA\n%02d-%02d-%02d\n%02d:%02d:%02d GMT\n%s mm/d", gps_year, gps_month, gps_day, hours, minutes, seconds, rainbuf);
   
   #ifdef LCD_REPORTING
   lcd.clear();
-  lcd.print(F("Sending daily SMS to Mobile_No3 .. "));
+  lcd.print(F("Sending daily SMS .. "));
   #endif
   #ifdef UART_REPORTING
-  Serial.print(F("Sending daily SMS to Mobile_No3 .. "));
+  Serial.print(F("Sending daily SMS .. "));
   #endif
-  sendSMS(Mobile_No3, sz);
-  delay(1000);
   
-//  //sprintf(sz, "HOTEL_TEST\nxxx mm/h");//[4]
-//  //sprintf(sz, "UO_LABUNORUWA\n%s mm/d",rainbuf);//[4]
-//  //sprintf(sz, "UO_MAHAKANADARAWA\n%s mm/d",rainbuf);//[4]
-//  sprintf(sz, "UO_ATHURUWELLA\n%s mm/d",rainbuf);//[4]
-//  lcd.clear();
-//  lcd.print(F("Module Initializing.."));
-//  //Serial.println();
-//  //Serial.println(F("Module Initializing..")); //Debug only to del
-//  Status = Module.Init(9600);
-//  if( Status == OK ){
-//    lcd.setCursor(0, 2);
-//    lcd.print(F("Module Ready."));
-//    //Serial.println(F("Module Ready.")); //Debug only to del
-//  }
-//  else{ 
-//    lcd.setCursor(0, 2);
-//    lcd.print(F("Module Initializing Failed.")); 
-//    //Serial.println(F("Module Initializing Failed.")); //Debug only to del
-//    delay(1000);
-//    lcd.clear();
-//    lcd.print(F("ERROR : "));
-//    lcd.setCursor(0, 2);
-//    lcd.print(Status);
-//    while(1){
-//    }; 
-//  }
-//  Module.Refresh();
-//  delay(10000);
-//
-//  lcd.print(F("Sending an alert SMS (long,lat,date,time,hourly rainfall"));
-//  Status = Module.Send_SMS(Mobile_No3, sz);
-//  if( Status == OK ){
-//    lcd.setCursor(0, 2);
-//    lcd.print(F("SMS Sent to No3"));
-//  }
-//  else{
-//    lcd.clear();
-//    lcd.print(F("SMS ERROR to No3: "));
-//    lcd.setCursor(0, 2);
-//    lcd.print(Status);
-//  }
+  ss.end();
+  delay(500);
+  if(GSM_Module_Init() == OK){
+    
+    delay(1000);
+  
+    sendSMS(Mobile_No1, sz);
+    sendSMS(Mobile_No2, sz);
+    sendSMS(Mobile_No8, sz);
+    
+  }
+  
+  Module.Refresh();
+  delay(1000);
+  Module.Close();
+  delay(500);
+  ss.begin(9600);
+
 }
 
 //void send2Server(){
