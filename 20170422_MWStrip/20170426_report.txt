@@ -1,0 +1,9 @@
+UO_ATHURUWELLA:
+1 - Concrete for raingauge upgrade to be cast tomorrow.
+2 - At 12.30 station started to have a raingauge glitch, reported rainfall 2500-4000 mm/h about in the next 3 hours. Got the station to the hotel.
+3 - Changed Arduino, added a passive cooler to the chip.
+4 - Made holes in the box and added a PC fan, there is less place, so I had to re-manage the location of everything but the batteries.
+5 - Will deliver tomorrow and check the concrete work, maybe install the WMO raingauge.
+
+NALLAMUDAWA_MAWATHAWEWA:
+1 - Delivered the working box on site.

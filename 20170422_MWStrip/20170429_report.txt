@@ -1,0 +1,11 @@
+
+NALLAMUDAWA_MAWATHAWEWA:
+1 - Installed station this morning
+
+UO_ATHURUWELLA:
+1 - Changed the GPS this morning as it was reporting around 12.30 instead of early morning with 2000-00-01 as a timestamp.
+2 - Arrived in Colombo and got another bug message of 321mm/h my guess is that the box is too small, so too warm, we have temperature in the shade of 40 degrees Celsius, we might reach the maximum operation temperature range of the circuit boards as they are not "industrial grade". 
+3 - Recommendation 1 for this set up:
+I brought back UO_LABUNO solar panel frame, it has a 300x250x120 electric box (IP65) support frame soldered into it,  one could get that from any electrical shop and set it up in replacement of the now too small box, with an additional fan and proper circulation. this will reduce the likelihood of IRQs jumping. 
+4 - Recommendation 2 for this set up:
+Also, I believe the direct connection of the main power line to the 5V input of the Arduino Mega is giving the system some issues as electric power is often dropped for few hours a day. I have set up a regulator already, but it may not be enough to provide smooth transitions in power in and out.

@@ -1,0 +1,4 @@
+UO_ATHURUWELLA:
+1 - Concrete for raingauge upgrade not made. They know now, and will make (when?).
+2 - Station reset from A'Pura hotel, but stuck again on the site, finally running after changing the whole external antenna. Removed internal antenna.
+3 - Journalists came the whole morning, they got some talks and practiced building themselves.

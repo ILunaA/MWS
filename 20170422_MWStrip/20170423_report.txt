@@ -1,0 +1,25 @@
+UO_ATHURUWELLA:
+1 - Concrete for raingauge upgrade not made.
+2 - Station reset, running after fitting the cables again into the solar charger output.
+3 - Signs of aging of external sensors, but still running.
+4 - SD card has empty files, but station has been switched off most of the time. 
+5 - SIM card has 1090LKR inside still.
+6 - Clean rain gauge internals, solar panels are also clean and manually tripped the rain gauge about 50 times to test the threshold value and see if a message was sent. We did not receive it. 
+7 - Planned to return on Monday with journalists.
+8 - Added a GSM antenna inside, upated code, initialising message received, but once closed box, the manual tipping alert was not received. Will change external antenna.
+
+UO_LABUNORUWA_WEWA_N_WANA:
+1 - UO was abandoned more than a year ago (source: neighbour)
+2 - We found that wind sensors where vandalised and the moving parts removed
+3 - we unbolted the main frame holding solar panel + box and brought it back in the car.
+4 - This station name should be removed from list
+5 - This system was still working inside (Power optimal, Arduino on, GSM OK), but data logger had not meaningful info stored.
+
+SRI_SADANANDA_PIRIVENA:
+1 - The power supply was on MODE 17, we put it back to MODE 16 for automatic operation.
+2 - Arduino powered optimally
+3 - GSM900a external board (small size) is blinking but not report. SIM card dead, replaced by UO_LABUNORU_WENA_N_WANA card (#4: 0773260142)
+4 - Even after replacement of SIM card, no initiliazation message
+5 - TODO: return with box salvaged from UO_LABUNORUWA_WEWA_N_WANA, and make use of that system.
+
+

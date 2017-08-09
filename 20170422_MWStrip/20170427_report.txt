@@ -1,0 +1,10 @@
+UO_ATHURUWELLA:
+1 - Concrete work done today, will go and install WMO-certified raingauge tomorrow.
+
+NALLAMUDAWA_MAWATHAWEWA:
+1 - Took the box for service, it did not report this morning.
+2 - Changed solar controller, will see if it reports tomorrow morning, then will send it back to field. 
+
+Mahaweli office (80.298011,8.156554, Contact Wajira Mrs, through Lal Muthuwatta):
+1 - Took one of the first weather stations to service, it does not have GSM capabilities, just data logging.
+2 - Added a regulator to 5V, it was reporting only 13.00 to 14.00, reduced reporting from 5 mins to 1 hour.

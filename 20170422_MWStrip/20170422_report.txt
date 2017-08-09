@@ -1,0 +1,25 @@
+UO_NUWARAWEWA_SALIYAPURA:
+1 - Concrete for raingauge upgrade not made.
+2 - Station running.
+3 - Signs of aging of external sensors, but still running.
+4 - SD card has empty files (why? TODO: check updated code from Lahiru/David trips
+5 - We cleaned the rain gauge and solar panels and manually tripped the rain gauge about 70 times to test the threshold value and see if a message was sent. This data point should be ignored.
+
+UO_MAHAKANADARAWA:
+1 - Concrete for raingauge upgrade not made.
+2 - Station reset, running after replacing the solar charger. 
+3 - Wire connections to solar charger must be pushed all the way to the back of the connection sockets to achieve a good connection. Station was previously not receiving adequate power due to a poor connection to charger. This was tested with a multimeter.
+4 - Signs of aging on external sensors, but still operational.
+5 - Nothing useful in SD card
+6 - Solar panel reoriented to face west, which was least blocked by trees. Sunlight will strike more directly, but only afternoons.
+
+THIRAPPANE_FARM:
+1 - Concrete for raingauge upgrade not made.
+2 - Solar charger was set to mode 3 and not mode 16
+3 - Station reset, solar charger set to mode 16, running.
+4 - Sensors less aged, their cables more.
+5 - SD card not found by laptop, nor mobile, must be broken, was replaced.
+6 - Screws on box were too small and not holding box shut, replaced.
+
+
+
