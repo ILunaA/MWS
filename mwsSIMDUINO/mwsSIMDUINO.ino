@@ -168,6 +168,11 @@ void setup()
   ss.print("mws simduino setup\r");   //The text for the message
   delay(1000);
   ss.write(0x1A);  //Equivalent to sending Ctrl+Z 
+  delay(1000);
+
+  ss.print("AT+CMGD=\"1,4\"\r");    //Try to delete all sms in cache
+  delay(1000);
+  ss.write(0x1A);  //Equivalent to sending Ctrl+Z 
 
   Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
   Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
