@@ -1,22 +1,5 @@
-/* 
- Weather Shield Example
- By: Nathan Seidle
- SparkFun Electronics
- Date: November 16th, 2013
- License: This code is public domain but you buy me a beer if you use this and we meet someday (Beerware license).
- 
- Much of this is based on Mike Grusin's USB Weather Board code: https://www.sparkfun.com/products/10586
- 
- This code reads all the various sensors (wind speed, direction, rain gauge, humidty, pressure, light, batt_lvl)
- and reports it over the serial comm port. This can be easily routed to an datalogger (such as OpenLog) or
- a wireless transmitter (such as Electric Imp).
- 
- Measurements are reported once a second but windspeed and rain gauge are tied to interrupts that are
- calcualted at each report.
- 
- This example code assumes the GP-635T GPS module is attached.
- 
- */
+//DEBUG
+#include <MemoryFree.h>
 
 #include <Wire.h> //I2C needed for sensors
 #include "MPL3115A2.h" //Pressure sensor
@@ -29,7 +12,7 @@
 TinyGPSPlus gps;
 
 //For SIMDUINO GPS/GSM from Simduino
-static const int RXPin = 7, TXPin = 8; //GPS is attached to pin 4(TX from GPS) and pin 5(RX into GPS)
+static const int RXPin = 7, TXPin = 8; //GPS is attached to pin 7(TX from GPS) and pin 8(RX into GPS)
 SoftwareSerial ss(RXPin, TXPin); 
 
 MPL3115A2 myPressure; //Create an instance of the pressure sensor
@@ -172,7 +155,6 @@ void setup()
 
   ss.print("AT+CMGD=\"1,4\"\r");    //Try to delete all sms in cache
   delay(1000);
-  ss.write(0x1A);  //Equivalent to sending Ctrl+Z 
 
   Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
   Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
@@ -210,6 +192,8 @@ void setup()
   minutes_10m = gps.time.minute();
   seconds = gps.time.second();
   lastSecond = millis();
+  //DEBUG
+  Serial.println(freeMemory());
 }
 
 void loop()
@@ -528,8 +512,6 @@ void printWeather()
   Serial.print(light_lvl, 2);//[22]
   Serial.print(",");
 }
-
-
 
 
 

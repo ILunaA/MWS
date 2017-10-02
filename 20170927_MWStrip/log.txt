@@ -1,0 +1,49 @@
+ Day1: 27 September 2017
+
+Arrived at noon, sent SMS to Prabath to meet at 2.00PM in his office.
+Went at 2PM to pick up Prabath, he was not there, people mentioned he was in the field, 4 persons in the office, 3 left as I was going out.
+Went to UO_NUWARAWEWA_SALIYAPURA to pick up the box for maintenance in the guest house.
+The raingauge tipping bucket was stuck because of surprisingly strong spider nest, took quite some pressure to break the web, infuriating the inhabitant... 
+Opening the box I started to rotate it from its place and found a wasp making a nest, the driver got a bit edgy because they seem to be dangerous. Got rid of the nest when the wasp went for a break.
+Inside the box, some spider nests in the vertical fringes/corners of the box, nothing much. 
+The Arduino was switched off, the battery runs optimum (13V) charger stable, power to the regulator is 3V, typical when system is off.
+Data logger has logged, thanks Dave for the fix ! Sending a copy of the log with this report.
+
+At this point, I am going to rewrite some code to reduce power consumption (NOGPS), flush SIM cache and send only SMS to Ladsindhu and Dave. Trying to reduce maximum the power comsumption.
+Could not flush sim card, it bugs the SIM.
+The pins from the regulator to the Arduino Mega seem to have loosened the connectors, I am using the internal side of them, they seem not used and fitting better, it is not reliable in the long run because the Arduino reinitializes every movement of those pins (it is exactly 5V, any movement drops it and let the Arduino cycle through a boot). I hope the SIMDuino with a Lithium pack will solve this issue.
+
+Day2: 28 September 2017
+
+Re-installed NUWARA station, but David told me he did not receive anything from it this morning. Will fetch it tomorrow.
+Went to Athuruwella station, restarted it, received SMS, instructed a young employee how to reboot it if needed.
+Went to NALLAMU station, it was still running, but got some issues with the reporting of high values. Tipping bucket was stuck with strong spider webs, and forcing it to work made that spider really unhappy (took photo). Took the box with me in the car, told the people in the temple that I will bring it back tomorrow.
+Went to Tirrappane goat farm. cleaned some small enough leaves to have passed through the filter (took photo), this one was also going boincky with high rainfall reports, so I also took the box to the guest house and told the guys there I'll be back tomorrow.
+
+Afternoon in hotel trying to debug these guys. 
+NALLAMU regulator was around 5.14V, fixed it back to 5.00V, strange, it should not move by itself, but then considering that one of the fans was stopped by a lizard, now in skeleton state (took photo), I am sure there is concern about natural forces of deregulation. 
+Did a RAM survey, at the end of the setup(), 5764 Bytes of RAM are free and at the end of the successive loop() iterations, 5752 bytes are free on the Arduino Mega, staying equal throughout loops (no memory loss), so plenty enough to not reset the Arduino by Memory glitch. After so many trials and errors, I changed the Arduino Mega to the new ones (black, with power from microUSB, like mobile phones, please add one of these cables in your box for further trips). So now the glitch seems gone, Arduino does not reset anymore. We should change all Arduino Mega with the black ones for the time being.
+THIRAPP seems OK after uploading the new code. But the OpenLog is dead, I changed it with a green one (old one too), even changed the SD card, nothing works, to note to bring a new SD card and a new OpenLog for that box. I changed the Arduino with a blue one (Geekriet) I got before coming this time. The one in place was having track of water corrosion on the underlying soldering points (took photo).
+
+Day3: 
+Started by NUWARA, did not give initial SMS, removed it and put it back in the van.
+Went to THIRAPP, did not initialize, spent 2 hours debugging from power supply to code, found a String that should have been Char in the last code written the night before... Setup, worked. propagated the code to NUWARA and NALLAMU boxes.
+Went to NALLAMU, did not give intialization SMS. even with new code. put back the box in the VAN.
+Went to SIRI_SA and found all cables cut, opened the box, and found a brown mouse and her nest (and a small gecko alive). After tense negotiations she was expelled. The box is ruined. We have to make it anew and replace it, I think it is a good time to think about SIMDUINO.
+Went to NUWARA, Installed and it worked, init SMS came through.
+Went to MAHAKAN, found a dead lizard still decomposing, and 2 eggs. uploaded new code and changed a fan.
+Lasindhu called me, he sends Prabath tomorrow to me to give the charts of our unreliable rainfall, he says that data received by SMS is injected into their reservoir hydrograph to take decision for water releases, the sooner they get them, and the most reliable they are, the best. I told him I am working on fixing the reliability issues.
+
+Day4:
+I have gone back to reassess the schematics of the weather shield after some time. In the light of signal debouncing info (See report on raingauge circuit) it turns out that the weather shield is missing a 1nanoF capacitor between signal and ground to have a full signal debouncing capacity. I am going to test that today, will go to the electrical shop (SWARNA) and try to build a homemade jumper. I still have NALLAMU weather station with me here, so it will be my mule.
+The new Weather Shield that David purchased are an upgrade of the earlier ones we have, there is a white teflon coating on the humidity sensor to avoid liquid water to enter and thus keep the value to 100% thereafter.
+Lasindhu gave me the new phone number of Prabath, finally in contact! He comes to the hotel at 10AM.
+Sent an email to Bobby, the Sparkfun guy I spoke to in 2015 about Arduino Uno to Mega rewiring, about including a debouncing capacitor in the next version of the weather shield. Let see if he answers.
+Did not meet Prabath, he did not come to the hotel. Lasindhu says he is back tonight, he will call me tomorrow.
+I have soldered a capacitor on the weather shield Rain pins 2&3 to bypass background power supply fluctuation noise, will see.
+Re-installed NALLAMU and NUWARA with capacitor.
+Gathered THIRAPP, MAHAKAN, ATHURU weahter shields for soldering.
+Realized I soldered wrongly on NALLAMU and NUWARA, went to pick up NUWARA and re-install MAHAKAN, went to re-install NUWARA too after fixing the soldering. NALLAMU will have to wait another trip.
+
+Day5:
+Went to re-install THIRAPP and ATHURU. Met with Lasindhu before heading to Colombo.
