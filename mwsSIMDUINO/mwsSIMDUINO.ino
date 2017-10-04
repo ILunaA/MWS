@@ -1,19 +1,21 @@
 //DEBUG
-#include <MemoryFree.h>
-
+//#include <MemoryFree.h>
 #include <Wire.h> //I2C needed for sensors
+//https://github.com/sparkfun/SparkFun_MPL3115A2_Breakout_Arduino_Library
 #include "MPL3115A2.h" //Pressure sensor
+//https://github.com/sparkfun/SparkFun_HTU21D_Breakout_Arduino_Library
 #include "HTU21D.h" //Humidity sensor
 #include <SoftwareSerial.h> //Needed for GPS
+//http://arduiniana.org/libraries/tinygpsplus/
 #include <TinyGPS++.h> //GPS parsing
 
-#define DEBUG true
 
-TinyGPSPlus gps;
+#define DEBUG false
 
 //For SIMDUINO GPS/GSM from Simduino
 static const int RXPin = 7, TXPin = 8; //GPS is attached to pin 7(TX from GPS) and pin 8(RX into GPS)
-SoftwareSerial ss(RXPin, TXPin); 
+SoftwareSerial ss(RXPin, TXPin);
+//HW serial is RXPin=1 TXPin=0 (to check order) can high baud rate.
 
 MPL3115A2 myPressure; //Create an instance of the pressure sensor
 HTU21D myHumidity; //Create an instance of the humidity sensor
@@ -79,12 +81,13 @@ float batt_lvl = 11.8; //[analog value from 0 to 1023]
 float light_lvl = 455; //[analog value from 0 to 1023]
 //Variables used for GPS
 //unsigned long age;
-//int year;
-//byte month, day, hour, minute, second, hundredths;
+int gpsyear = 2000;
+int gpsmonth, gpsday, gpshour, gpsminute, gpssecond, gpshundredths;
+int gpslng, gpslat, gpsalt, gpssat;
 
 //Calibrate rain bucket here
 //Rectangle raingauge from Sparkfun.com/MISOL weather sensors
-float rain_bucket_mm = 0.011*25.4;//Each dump is 0.011" of water
+float rain_bucket_mm = 0.011 * 25.4; //Each dump is 0.011" of water
 //DAVISNET Rain Collector 2
 //float rain_bucket_mm = 0.01*25.4;//Each dump is 0.01" of water
 
@@ -93,7 +96,7 @@ volatile unsigned long raintime, rainlast, raininterval, rain, Rainindtime, Rain
 
 //for loop
 int i;
-int hourReport=0;
+int hourReport = 0;
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Interrupt routines (these are called by the hardware interrupts, not by the main code)
@@ -105,9 +108,9 @@ void rainIRQ()
   raintime = millis(); // grab current time
   raininterval = raintime - rainlast; // calculate interval between this and last event
 
-    if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
+  if (raininterval > 100) // ignore switch-bounce glitches less than 10mS after initial edge
   {
-    dailyrainin += rain_bucket_mm; 
+    dailyrainin += rain_bucket_mm;
     rainHour[minutes] += rain_bucket_mm; //Increase this minute's amount of rain
     rainlast = raintime; // set up for next event
   }
@@ -133,28 +136,21 @@ void setup()
   //Start software serial for GPS/GSM
   ss.begin(19200);  //Default serial port setting for the GPRS modem is 19200bps 8-N-1
   ss.print("\r");
-  delay(1000);                    //Wait for a second while the modem sends an "OK"
-  ss.print("AT+CMGF=1\r");    //Because we want to send the SMS in text mode
   delay(1000);
-
-  ss.print("AT+CSCA=\"+9477000003\"\r");  //Setting for the SMS Message center number,  
-  delay(1000);                                  //uncomment only if required and replace with
-  //the message center number obtained from
-  //your GSM service provider.
-  //Note that when specifying a tring of characters
-  // " is entered as \"
-
-  ss.print("AT+CMGS=\"+94716494873\"\r");    //Start accepting the text for the message
-  //to be sent to the number specified.
-  //Replace this number with the target mobile number.
-  delay(1000);
-  ss.print("mws simduino setup\r");   //The text for the message
-  delay(1000);
-  ss.write(0x1A);  //Equivalent to sending Ctrl+Z 
-  delay(1000);
-
-  ss.print("AT+CMGD=\"1,4\"\r");    //Try to delete all sms in cache
-  delay(1000);
+  Serial.println(F("SMS part"));
+  do
+  {
+    ss.print("AT+CMGF=1\r");
+    Serial.println(sendData("AT+CMGF=0", 1000, DEBUG));
+       //Because we want to send the SMS in text mode
+  } while((String)"OK"!=sendData("AT+CMGF=1", 1000, DEBUG));
+  //Serial.println(sendData("AT+CSCA=\"+9477000003\"", 1000, DEBUG));  //Setting for the SMS Message center number,
+  //Note that when specifying a String of characters " is entered as \"
+  Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message
+  //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message
+  Serial.println(sendData("\"mws simduino setup\"", 1000, DEBUG));   //The text for the message
+  Serial.println(sendData("0x1A", 1000, DEBUG));  //Equivalent to sending Ctrl+Z
+  //Serial.println(sendData("AT+CMGD=\"1,4\"\r", 1000, DEBUG));    //Try to delete all sms in cache
 
   Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
   Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
@@ -170,7 +166,7 @@ void setup()
   myPressure.begin(); // Get sensor online
   myPressure.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
   myPressure.setOversampleRate(7); // Set Oversample to the recommended 128
-  myPressure.enableEventFlags(); // Enable all three pressure and temp event flags 
+  myPressure.enableEventFlags(); // Enable all three pressure and temp event flags
 
   //Configure the humidity sensor
   myHumidity.begin();
@@ -184,16 +180,16 @@ void setup()
 
   // turn on interrupts
   interrupts();
-  
+
   //GPS on
   getgps();
-  hourReport=gps.time.hour()-1;
-  minutes = gps.time.minute();
-  minutes_10m = gps.time.minute();
-  seconds = gps.time.second();
+  hourReport = gpshour - 1;
+  minutes = gpsminute;
+  minutes_10m = gpsminute;
+  seconds = gpssecond;
   lastSecond = millis();
   //DEBUG
-  Serial.println(freeMemory());
+  //Serial.println(freeMemory());
 }
 
 void loop()
@@ -203,8 +199,8 @@ void loop()
   lastSecond = millis();
 
   //Take a speed and direction reading every second for 2 minute average
-  seconds_2m += loopMSecond/1000;
-  if(++seconds_2m > 119) seconds_2m = 0;
+  seconds_2m += loopMSecond / 1000;
+  if (++seconds_2m > 119) seconds_2m = 0;
 
   //Calc the wind speed and direction every second for 120 second to get 2 minute average
   float currentSpeed = get_wind_speed();
@@ -213,26 +209,26 @@ void loop()
   winddiravg[seconds_2m] = currentDirection;
 
   //Check to see if this is a gust for the minute
-  if(currentSpeed > windgust_10m[minutes_10m])
+  if (currentSpeed > windgust_10m[minutes_10m])
   {
     windgust_10m[minutes_10m] = currentSpeed;
     windgustdirection_10m[minutes_10m] = currentDirection;
   }
 
   //Check to see if this is a gust for the day
-  if(currentSpeed > windgustms)
+  if (currentSpeed > windgustms)
   {
     windgustms = currentSpeed;
     windgustdir = currentDirection;
   }
-  seconds += loopMSecond/1000;
-  if(++seconds > 59) seconds = 0;
-  if(++minutes > 59) minutes = 0;
-  minutes += seconds/60;
-  minutes_10m += seconds/60;
-  if(++minutes_10m > 9){
+  seconds += loopMSecond / 1000;
+  if (++seconds > 59) seconds = 0;
+  if (++minutes > 59) minutes = 0;
+  minutes += seconds / 60;
+  minutes_10m += seconds / 60;
+  if (++minutes_10m > 9) {
     minutes_10m = 0;
-    for (i=0;i<10;i++) windgust_10m[i] = 0;
+    for (i = 0; i < 10; i++) windgust_10m[i] = 0;
   }
   rainHour[minutes] = 0; //Zero out this minute's rainfall amount
   windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
@@ -240,80 +236,158 @@ void loop()
   printWeather();
   //Wait 1 second, and gather GPS data
   delay(1000);
-  getgps(); 
+  getgps();
   //REPORTING
   //Check for a new hour passing
-  Serial.print(hourReport);
-  Serial.print(gps.time.hour());
-  Serial.print(gps.time.minute());
-  if((gps.time.minute()>=0)&&(gps.time.minute()<2)){
-    Serial.print("inside the reporting if 1");
+  //Serial.print(hourReport);
+  //Serial.print(gpshour);
+  //Serial.print(gpsminute);
+  if ((gpsminute >= 0) && (gpsminute < 2)) {
+    //Serial.print(F("inside the reporting if 1"));
     //Check that the actual hour is incremented from last report
-    if(hourReport<gps.time.hour()){
-      Serial.print("inside the reporting if 2");
+    if (hourReport < gpshour) {
+      //Serial.print(F("inside the reporting if 2"));
       //Report all readings hourly
       printWeather();
       //Turn off stat LED
       delay(1000);
-      hourReport=gps.time.hour();
+      hourReport = gpshour;
     }
   }
 }
 
 void getgps(void)
 {
+  String gpsdata = "";
+  String gpsdatatmp = "";
   //GPS baud rate is 9600 for coms
-  switchGPSonoff( "AT+UART=9600,8,1,0,0",1000,DEBUG);
-  switchGPSonoff( "AT+CGNSPWR=1",1000,DEBUG); 
+  switchGPSonoff( "AT+UART=9600,8,1,0,0", 1000, DEBUG);
+  switchGPSonoff( "AT+CGNSPWR=1", 1000, DEBUG);
+  switchGPSonoff( "AT+CGNSSEQ=RMC", 1000, DEBUG);
   do
   {
-    sendData( "AT+CGNSSEQ=RMC",1000,DEBUG);
+    gpsdata.concat(sendData( "AT+CGNSINF", 1000, DEBUG));
+    delay(1000);
+    gpsdatatmp.concat(gpsdata);
+    Serial.println(gpsdata);
+    //get YEAR
+    gpsdatatmp.remove(31);
+    gpsdatatmp.remove(0, 27);
+    gpsyear = gpsdatatmp.toInt();
+    gpsdatatmp = "";
+    gpsdatatmp.concat(gpsdata);
+    //get MONTH
+    gpsdatatmp.remove(33);
+    gpsdatatmp.remove(0, 31);
+    gpsmonth = gpsdatatmp.toInt() ;
+    gpsdatatmp = "";
+    gpsdatatmp.concat(gpsdata);
+    //get DAY
+    gpsdatatmp.remove(35);
+    gpsdatatmp.remove(0, 33);
+    gpsday = gpsdatatmp.toInt() ;
+    gpsdatatmp = "";
+    gpsdatatmp.concat(gpsdata);
+    //get HOUR
+    gpsdatatmp.remove(37);
+    gpsdatatmp.remove(0, 35);
+    gpshour = gpsdatatmp.toInt() ;
+    gpsdatatmp = "";
+    gpsdatatmp.concat(gpsdata);
+    //get MINUTE
+    gpsdatatmp.remove(39);
+    gpsdatatmp.remove(0, 37);
+    gpsminute = gpsdatatmp.toInt() ;
+    gpsdatatmp = "";
+    gpsdatatmp.concat(gpsdata);
+    //get SECOND
+    gpsdatatmp.remove(41);
+    gpsdatatmp.remove(0, 39);
+    gpssecond = gpsdatatmp.toInt() ;
+
   }
-  while(gps.date.year()<2015); 
-  switchGPSonoff( "AT+CGNSPWR=0",1000,DEBUG);
+  while (gpsyear < 2015 && gpsmonth == 0 && gpsday == 0 && (gpshour == 0 || gpshour > 12));
+  do
+  {
+    gpsdata.concat(sendData( "AT+CGNSINF", 1000, DEBUG));
+    delay(1000);
+    gpsdatatmp.concat(gpsdata);
+    Serial.println(gpsdata);
+    //get LONG
+    gpsdatatmp.remove(31);
+    gpsdatatmp.remove(0, 27);
+    gpslng = gpsdatatmp.toInt();
+    gpsdatatmp = "";
+    gpsdatatmp.concat(gpsdata);
+    //get LAT
+    gpsdatatmp.remove(31);
+    gpsdatatmp.remove(0, 27);
+    gpslat = gpsdatatmp.toInt();
+    gpsdatatmp = "";
+    gpsdatatmp.concat(gpsdata);
+    //get ALT
+    gpsdatatmp.remove(31);
+    gpsdatatmp.remove(0, 27);
+    gpsalt = gpsdatatmp.toInt();
+    gpsdatatmp = "";
+    gpsdatatmp.concat(gpsdata);
+    //get SAT
+    gpsdatatmp.remove(31);
+    gpsdatatmp.remove(0, 27);
+    gpssat = gpsdatatmp.toInt();
+    gpsdatatmp = "";
+  }
+  while (gpslng <= 0.01 && gpslat <= 0.01 && gpsalt <= 0.01);
+  switchGPSonoff( "AT+CGNSPWR=0", 1000, DEBUG);
   //FGSM baud rate is 19200 max through software serial
-  switchGPSonoff( "AT+UART=19200,8,1,0,0",1000,DEBUG);
+  switchGPSonoff( "AT+UART=19200,8,1,0,0", 1000, DEBUG);
+  //FGSM baud rate is 115200 max through HW serial PINs 0-1)
+  //switchGPSonoff( "AT+UART=115200,8,1,0,0",1000,DEBUG);
+  Serial.println(gpslng);
+  Serial.println(gpslat);
+  Serial.println(gpsalt);
+  Serial.println(gpssat);
 }
 
 String switchGPSonoff(String command, const int timeout, boolean debug)
 {
-  String response = "";    
-  ss.println(command); 
-  long int time = millis();   
-  while( (time+timeout) > millis())
+  //Serial.println("switchGPSonoff");
+  String response = "";
+  ss.println(command);
+  long int time = millis();
+  while ( (time + timeout) > millis())
   {
-    while(ss.available())
-    {       
-      char c = ss.read(); 
-      response+=c;
-    }  
-  }    
-  if(debug)
+    while (ss.available())
+    {
+      char c = ss.read();
+      response += c;
+    }
+  }
+  if (debug)
   {
-    Serial.print(response);
-  }    
+    Serial.println(response);
+  }
   return response;
 }
 
 
 String sendData(String command, const int timeout, boolean debug)
 {
-  String response = "";    
-  ss.println(command); 
-  long int time = millis();   
-  while( (time+timeout) > millis())
+  String response = "";
+  ss.println(command);
+  long int time = millis();
+  while ( (time + timeout) > millis())
   {
-    while(ss.available())
-    {       
-      gps.encode(ss.read());
-      char c = ss.read(); 
-      response+=c;
-    }  
-  }    
-  if(debug)
+    while (ss.available())
+    {
+      char c = ss.read();
+      response += c;
+    }
+  }
+  if (debug)
   {
-    Serial.print(response);
-  }    
+    Serial.println(response);
+  }
   return response;
 }
 
@@ -334,14 +408,14 @@ void calcWeather()
 
   //Calc windspdms_avg2m
   float temp = 0;
-  for(int i = 0 ; i < 120 ; i++)
+  for (int i = 0 ; i < 120 ; i++)
     temp += windspdavg[i];
   temp /= 120.0;
   windspdms_avg2m = temp;
 
   //Calc winddir_avg2m
   temp = 0; //Can't use winddir_avg2m because it's an int
-  for(int i = 0 ; i < 120 ; i++)
+  for (int i = 0 ; i < 120 ; i++)
     temp += winddiravg[i];
   temp /= 120;
   winddir_avg2m = temp;
@@ -351,10 +425,10 @@ void calcWeather()
   //Find the largest windgust in the last 10 minutes
   windgustms_10m = 0;
   windgustdir_10m = 0;
-  //Step through the 10 minutes  
-  for(int i = 0; i < 10 ; i++)
+  //Step through the 10 minutes
+  for (int i = 0; i < 10 ; i++)
   {
-    if(windgust_10m[i] > windgustms_10m)
+    if (windgust_10m[i] > windgustms_10m)
     {
       windgustms_10m = windgust_10m[i];
       windgustdir_10m = windgustdirection_10m[i];
@@ -363,10 +437,10 @@ void calcWeather()
 
   //Calc humidity
   humidity = myHumidity.readHumidity();
-  if(myHumidity.readTemperature())
+  if (myHumidity.readTemperature())
   {
     tempf = myHumidity.readTemperature();
-  } 
+  }
   else
   {
     //Calc tempf from pressure sensor
@@ -374,8 +448,8 @@ void calcWeather()
   }
 
   //Calculate amount of rainfall for the last 60 minutes
-  rainin = 0;  
-  for(int i = 0 ; i < 60 ; i++)
+  rainin = 0;
+  for (int i = 0 ; i < 60 ; i++)
     rainin += rainHour[i];
 
   //Calc pressure
@@ -396,7 +470,7 @@ float get_light_level()
   float lightSensor = analogRead(LIGHT);
   operatingVoltage = 3.3 / operatingVoltage; //The reference voltage is 3.3V
   lightSensor = operatingVoltage * lightSensor;
-  return(lightSensor);
+  return (lightSensor);
 }
 
 //Returns the voltage of the raw pin based on the 3.3V rail
@@ -410,7 +484,7 @@ float get_battery_level()
   operatingVoltage = 3.30 / operatingVoltage; //The reference voltage is 3.3V
   rawVoltage = operatingVoltage * rawVoltage; //Convert the 0 to 1023 int to actual voltage on BATT pin
   rawVoltage *= 4.90; //(3.9k+1k)/1k - multiple BATT voltage by the voltage divider to get actual system voltage
-  return(rawVoltage);
+  return (rawVoltage);
 }
 
 //Returns the instataneous wind speed
@@ -425,11 +499,11 @@ float get_wind_speed()
   windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
   windSpeed *= 1.609344; //5.968MPH * 1.609344 = 9.604564992KMPH
   windSpeed /= 3.6; //9.604564992KMPH / 3.6 = 2.66793472MPS
-  return(windSpeed);
+  return (windSpeed);
 }
 
 //Read the wind direction sensor, return heading in degrees
-int get_wind_direction() 
+int get_wind_direction()
 {
   unsigned int adc;
   adc = analogRead(WDIR); // get the current reading from the sensor
@@ -463,22 +537,22 @@ void printWeather()
   calcWeather(); //Go calc all the various sensors
 
   Serial.println();
-  Serial.print(gps.location.lng(), 6);//[0]
+  Serial.print(gpslng, 6);//[0]
   Serial.print(",");
-  Serial.print(gps.location.lat(), 6);//[1]
+  Serial.print(gpslat, 6);//[1]
   Serial.print(",");
-  Serial.print(gps.altitude.meters());//[2]
+  Serial.print(gpsalt);//[2]
   Serial.print(",");
-  Serial.print(gps.satellites.value());//[3]
+  Serial.print(gpssat);//[3]
 
   char sz[32];
   Serial.print(",");
-  sprintf(sz, "%02d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());//[4]
+  sprintf(sz, "%02d-%02d-%02d", gpsyear, gpsmonth, gpsday);//[4]
   Serial.print(sz);
 
   Serial.print(",");
-  sprintf(sz, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());//[5]
-  Serial.print(sz); 
+  sprintf(sz, "%02d:%02d:%02d", gpshour, gpsminute, gpssecond);//[5]
+  Serial.print(sz);
 
   Serial.print(",");
   Serial.print(get_wind_direction());//[6]
@@ -512,6 +586,8 @@ void printWeather()
   Serial.print(light_lvl, 2);//[22]
   Serial.print(",");
 }
+
+
 
 
 
