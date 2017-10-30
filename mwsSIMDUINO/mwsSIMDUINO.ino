@@ -1,5 +1,6 @@
 //DEBUG
 //#include <MemoryFree.h>
+#include<string.h>
 #include <Wire.h> //I2C needed for sensors
 //https://github.com/sparkfun/SparkFun_MPL3115A2_Breakout_Arduino_Library
 #include "MPL3115A2.h" //Pressure sensor
@@ -10,7 +11,7 @@
 #include <TinyGPS++.h> //GPS parsing
 
 
-#define DEBUG false
+#define DEBUG true
 
 //For SIMDUINO GPS/GSM from Simduino
 static const int RXPin = 7, TXPin = 8; //GPS is attached to pin 7(TX from GPS) and pin 8(RX into GPS)
@@ -25,6 +26,7 @@ HTU21D myHumidity; //Create an instance of the humidity sensor
 // digital I/O pins
 const byte RAIN = 2;
 const byte WSPEED = 3;
+const byte SIM808 = 10;
 
 // analog I/O pins
 const byte WDIR = A0;
@@ -83,7 +85,8 @@ float light_lvl = 455; //[analog value from 0 to 1023]
 //unsigned long age;
 int gpsyear = 2000;
 int gpsmonth, gpsday, gpshour, gpsminute, gpssecond, gpshundredths;
-int gpslng, gpslat, gpsalt, gpssat;
+float gpslng = 0.0, gpslat = 0.0, gpsalt = 0.0;
+int gpssat = 0;
 
 //Calibrate rain bucket here
 //Rectangle raingauge from Sparkfun.com/MISOL weather sensors
@@ -129,29 +132,27 @@ void wspeedIRQ()
 
 void setup()
 {
-
   //Start Serial port reporting
   Serial.begin(9600);
-
   //Start software serial for GPS/GSM
   ss.begin(19200);  //Default serial port setting for the GPRS modem is 19200bps 8-N-1
-  ss.print("\r");
-  delay(1000);
-  Serial.println(F("SMS part"));
-  do
-  {
-    ss.print("AT+CMGF=1\r");
-    Serial.println(sendData("AT+CMGF=0", 1000, DEBUG));
-       //Because we want to send the SMS in text mode
-  } while((String)"OK"!=sendData("AT+CMGF=1", 1000, DEBUG));
+  //Start Modem
+  pinMode(SIM808, OUTPUT);
+  digitalWrite(SIM808, HIGH); //SWITCH ON SIM808
+  delay(40000); //WAIT FOR SIM808
+  //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
+  //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
+  //delay(5000); //WAIT FOR SIM808
+  //*//Serial.print(sendData(" ", 2000, DEBUG));
+  //*//Serial.println(sendData("AT+CMGF=1", 1000, true));
   //Serial.println(sendData("AT+CSCA=\"+9477000003\"", 1000, DEBUG));  //Setting for the SMS Message center number,
   //Note that when specifying a String of characters " is entered as \"
-  Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message
-  //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message
-  Serial.println(sendData("\"mws simduino setup\"", 1000, DEBUG));   //The text for the message
-  Serial.println(sendData("0x1A", 1000, DEBUG));  //Equivalent to sending Ctrl+Z
-  //Serial.println(sendData("AT+CMGD=\"1,4\"\r", 1000, DEBUG));    //Try to delete all sms in cache
-
+  //Serial.println(sendData("AT+CMGS=\"+33785351655\"", 1000, DEBUG));    //Start accepting the text for the message Stef
+  //*//Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message Dave
+  //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
+  //*//Serial.println(sendData("\"Yann test mws simduino setup\"", 1000, DEBUG));   //The text for the message
+  //*//ss.write(0x1A);
+  delay(1000);
   Serial.print(F("lon,lat,altitude,sats,date,GMTtime,winddir"));
   Serial.print(F(",windspeedms,windgustms,windgustdir,windspdms_avg2m,winddir_avg2m,windgustms_10m,windgustdir_10m"));
   Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,pressure,batt_lvl,light_lvl"));
@@ -181,8 +182,8 @@ void setup()
   // turn on interrupts
   interrupts();
 
-  //GPS on
-  getgps();
+  //GPS on, get once GPS coordinates on setup => true
+  getgps(true);
   hourReport = gpshour - 1;
   minutes = gpsminute;
   minutes_10m = gpsminute;
@@ -236,7 +237,7 @@ void loop()
   printWeather();
   //Wait 1 second, and gather GPS data
   delay(1000);
-  getgps();
+  getgps(false);
   //REPORTING
   //Check for a new hour passing
   //Serial.print(hourReport);
@@ -256,20 +257,26 @@ void loop()
   }
 }
 
-void getgps(void)
+void getgps(int LATLONG)
 {
+  //digitalWrite(SIM808, HIGH); //SWITCH ON SIM808
+  delay(2000);
   String gpsdata = "";
   String gpsdatatmp = "";
+  String tmp = "";
   //GPS baud rate is 9600 for coms
   switchGPSonoff( "AT+UART=9600,8,1,0,0", 1000, DEBUG);
   switchGPSonoff( "AT+CGNSPWR=1", 1000, DEBUG);
   switchGPSonoff( "AT+CGNSSEQ=RMC", 1000, DEBUG);
   do
   {
+    //GET GPS DATA
+    gpsdata = "";
     gpsdata.concat(sendData( "AT+CGNSINF", 1000, DEBUG));
+    gpsdatatmp = "";
     delay(1000);
     gpsdatatmp.concat(gpsdata);
-    Serial.println(gpsdata);
+    gpsdatatmp.remove(75);
     //get YEAR
     gpsdatatmp.remove(31);
     gpsdatatmp.remove(0, 27);
@@ -304,49 +311,73 @@ void getgps(void)
     gpsdatatmp.remove(41);
     gpsdatatmp.remove(0, 39);
     gpssecond = gpsdatatmp.toInt() ;
-
+    gpsdatatmp = "";
+    gpsdatatmp.concat(gpsdata);
+    //Test if there is Lat/Long data
+    tmp = gpsdatatmp[46];
+    if (!tmp.equals(",") && LATLONG == true) {
+      //get LAT (8.424)
+      gpslat = tmp.toInt();
+      tmp = gpsdatatmp[48];
+      gpslat += 0.1 * tmp.toInt();
+      tmp = gpsdatatmp[49];
+      gpslat += 0.01 * tmp.toInt();
+      tmp = gpsdatatmp[50];
+      gpslat += 0.001 * tmp.toInt();
+      //get LONG (80.357)
+      tmp = gpsdatatmp[55];
+      gpslng = 10 * tmp.toInt();
+      tmp = gpsdatatmp[56];
+      gpslng += tmp.toInt();
+      tmp = gpsdatatmp[58];
+      gpslng += 0.1 * tmp.toInt();
+      tmp = gpsdatatmp[59];
+      gpslng += 0.01 * tmp.toInt();
+      tmp = gpsdatatmp[60];
+      gpslng += 0.001 * tmp.toInt();
+      //get ALT
+      tmp = gpsdatatmp[66];
+      if (tmp.equals(".")) {
+        tmp = gpsdatatmp[65];
+        gpsalt = tmp.toInt();
+        tmp = gpsdatatmp[67];
+        gpsalt += 0.1 * tmp.toInt();
+      }
+      tmp = gpsdatatmp[67];
+      if (tmp.equals(".")) {
+        tmp = gpsdatatmp[65];
+        gpsalt = 10 * tmp.toInt();
+        tmp = gpsdatatmp[66];
+        gpsalt += tmp.toInt();
+        tmp = gpsdatatmp[68];
+        gpsalt += 0.1 * tmp.toInt();
+      }
+      tmp = gpsdatatmp[68];
+      if (tmp.equals(".")) {
+        tmp = gpsdatatmp[65];
+        gpsalt = 100 * tmp.toInt();
+        tmp = gpsdatatmp[66];
+        gpsalt += 10 * tmp.toInt();
+        tmp = gpsdatatmp[67];
+        gpsalt += tmp.toInt();
+        tmp = gpsdatatmp[68];
+        gpsalt += 0.1 * tmp.toInt();
+      }
+      //get SAT
+      gpsdatatmp.remove(71);
+      gpsdatatmp.remove(0, 69);
+      gpssat = gpsdatatmp.toInt();
+      gpsdatatmp = "";
+      gpsdata = "";
+    }
   }
-  while (gpsyear < 2015 && gpsmonth == 0 && gpsday == 0 && (gpshour == 0 || gpshour > 12));
-  do
-  {
-    gpsdata.concat(sendData( "AT+CGNSINF", 1000, DEBUG));
-    delay(1000);
-    gpsdatatmp.concat(gpsdata);
-    Serial.println(gpsdata);
-    //get LONG
-    gpsdatatmp.remove(31);
-    gpsdatatmp.remove(0, 27);
-    gpslng = gpsdatatmp.toInt();
-    gpsdatatmp = "";
-    gpsdatatmp.concat(gpsdata);
-    //get LAT
-    gpsdatatmp.remove(31);
-    gpsdatatmp.remove(0, 27);
-    gpslat = gpsdatatmp.toInt();
-    gpsdatatmp = "";
-    gpsdatatmp.concat(gpsdata);
-    //get ALT
-    gpsdatatmp.remove(31);
-    gpsdatatmp.remove(0, 27);
-    gpsalt = gpsdatatmp.toInt();
-    gpsdatatmp = "";
-    gpsdatatmp.concat(gpsdata);
-    //get SAT
-    gpsdatatmp.remove(31);
-    gpsdatatmp.remove(0, 27);
-    gpssat = gpsdatatmp.toInt();
-    gpsdatatmp = "";
-  }
-  while (gpslng <= 0.01 && gpslat <= 0.01 && gpsalt <= 0.01);
+  while (gpsyear < 2017 || gpslng <= 0.01 || gpslat <= 0.01 || gpsalt <= 0.01); // SHOULD BE IN 2017 OR MORE TO BE VALID
   switchGPSonoff( "AT+CGNSPWR=0", 1000, DEBUG);
   //FGSM baud rate is 19200 max through software serial
   switchGPSonoff( "AT+UART=19200,8,1,0,0", 1000, DEBUG);
   //FGSM baud rate is 115200 max through HW serial PINs 0-1)
   //switchGPSonoff( "AT+UART=115200,8,1,0,0",1000,DEBUG);
-  Serial.println(gpslng);
-  Serial.println(gpslat);
-  Serial.println(gpsalt);
-  Serial.println(gpssat);
+  digitalWrite(SIM808, LOW); //SWITCH OFF SIM808
 }
 
 String switchGPSonoff(String command, const int timeout, boolean debug)
@@ -394,6 +425,9 @@ String sendData(String command, const int timeout, boolean debug)
 //Calculates each of the variables that wunderground is expecting
 void calcWeather()
 {
+  digitalWrite(SIM808, HIGH); //SWITCH OFF SIM808
+  getgps(false); //get gps info (no update of coordinates => false
+
   //Calc winddir
   winddir = get_wind_direction();
 
