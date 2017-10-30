@@ -10,6 +10,7 @@
 //http://arduiniana.org/libraries/tinygpsplus/
 #include <TinyGPS++.h> //GPS parsing
 
+#define STATION_NAME "simduino"
 
 #define DEBUG true
 
@@ -158,7 +159,9 @@ void setup()
   Serial.print(F(",humidity,tempc,rainhourmm,raindailymm,pressure,batt_lvl,light_lvl"));
 
   pinMode(WSPEED, INPUT_PULLUP); // input from wind meters windspeed sensor
-  pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
+  //pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
+  //When using hardware debounce (0.1uF capacitor from PIN2 to GND) no need of PULLUP resistor
+  pinMode(RAIN, INPUT); // input from wind meters rain gauge sensor
 
   pinMode(REFERENCE_3V3, INPUT);
   pinMode(LIGHT, INPUT);
@@ -189,12 +192,29 @@ void setup()
   minutes_10m = gpsminute;
   seconds = gpssecond;
   lastSecond = millis();
+
+  //CONFIRM BY SMS Lat/Long ARE ACQUIRED
+  //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
+  //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
+  //delay(5000); //WAIT FOR SIM808
+  Serial.print(sendData(" ", 2000, DEBUG));
+  Serial.println(sendData("AT+CMGF=1", 1000, true));
+  //Serial.println(sendData("AT+CSCA=\"+9477000003\"", 1000, DEBUG));  //Setting for the SMS Message center number,
+  //Note that when specifying a String of characters " is entered as \"
+  //Serial.println(sendData("AT+CMGS=\"+33785351655\"", 1000, DEBUG));    //Start accepting the text for the message Stef
+  Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message Dave
+  //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
+  Serial.println(sendData("\"GPS lat/Long coordinates acquired\"", 1000, DEBUG));   //The text for the message
+  ss.write(0x1A);
+  delay(1000);
   //DEBUG
   //Serial.println(freeMemory());
+
 }
 
 void loop()
 {
+  char sz[32];
   //Keep track of which minute it is
   loopMSecond = millis() - lastSecond;
   lastSecond = millis();
@@ -237,6 +257,7 @@ void loop()
   printWeather();
   //Wait 1 second, and gather GPS data
   delay(1000);
+  //digitalWrite(SIM808, HIGH); //SWITCH ON SIM808
   getgps(false);
   //REPORTING
   //Check for a new hour passing
@@ -248,8 +269,47 @@ void loop()
     //Check that the actual hour is incremented from last report
     if (hourReport < gpshour) {
       //Serial.print(F("inside the reporting if 2"));
-      //Report all readings hourly
+      //Report all readings hourly to Serial port
       printWeather();
+      //Send daily rain report at 2AM GMT
+      if (gpshour == 2) {
+        sprintf(sz, "\"%d : %.3f mm/d\"", STATION_NAME, dailyrainin); //[4]
+        //CONFIRM BY SMS Lat/Long ARE ACQUIRED
+        //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
+        //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
+        //delay(5000); //WAIT FOR SIM808
+        Serial.print(sendData(" ", 2000, DEBUG));
+        Serial.println(sendData("AT+CMGF=1", 1000, true));
+        //Serial.println(sendData("AT+CSCA=\"+9477000003\"", 1000, DEBUG));  //Setting for the SMS Message center number,
+        //Note that when specifying a String of characters " is entered as \"
+        //Serial.println(sendData("AT+CMGS=\"+33785351655\"", 1000, DEBUG));    //Start accepting the text for the message Stef
+        Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message Dave
+        //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
+        Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
+        ss.write(0x1A);
+        delay(1000);
+      }
+      if (rainin > 200.0) { //software debounding
+        dailyrainin -= rainin;
+        rainin = 0.0;
+      }
+      if (rainin > 10.0) {
+        sprintf(sz, "\"%d : %.3f mm/h\"", STATION_NAME, rainin); //[4]
+        //CONFIRM BY SMS Lat/Long ARE ACQUIRED
+        //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
+        //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
+        //delay(5000); //WAIT FOR SIM808
+        Serial.print(sendData(" ", 2000, DEBUG));
+        Serial.println(sendData("AT+CMGF=1", 1000, true));
+        //Serial.println(sendData("AT+CSCA=\"+9477000003\"", 1000, DEBUG));  //Setting for the SMS Message center number,
+        //Note that when specifying a String of characters " is entered as \"
+        //Serial.println(sendData("AT+CMGS=\"+33785351655\"", 1000, DEBUG));    //Start accepting the text for the message Stef
+        Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message Dave
+        //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
+        Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
+        ss.write(0x1A);
+        delay(1000);
+      }
       //Turn off stat LED
       delay(1000);
       hourReport = gpshour;
@@ -377,7 +437,7 @@ void getgps(int LATLONG)
   switchGPSonoff( "AT+UART=19200,8,1,0,0", 1000, DEBUG);
   //FGSM baud rate is 115200 max through HW serial PINs 0-1)
   //switchGPSonoff( "AT+UART=115200,8,1,0,0",1000,DEBUG);
-  digitalWrite(SIM808, LOW); //SWITCH OFF SIM808
+  //digitalWrite(SIM808, LOW); //SWITCH OFF SIM808
 }
 
 String switchGPSonoff(String command, const int timeout, boolean debug)
@@ -425,8 +485,8 @@ String sendData(String command, const int timeout, boolean debug)
 //Calculates each of the variables that wunderground is expecting
 void calcWeather()
 {
-  digitalWrite(SIM808, HIGH); //SWITCH OFF SIM808
-  getgps(false); //get gps info (no update of coordinates => false
+  //digitalWrite(SIM808, HIGH); //SWITCH OFF SIM808
+  getgps(false); //get gps info (no update of coordinates => false)
 
   //Calc winddir
   winddir = get_wind_direction();
