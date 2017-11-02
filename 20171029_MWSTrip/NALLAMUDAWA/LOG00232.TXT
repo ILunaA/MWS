@@ -1,0 +1,2 @@
+lon,lat,altitude,sats,date,GMTtime,winddir,windspeedms,windgustms,windgustdir,windspdms_avg5m,winddir_avg5m,windgustms_5m,windgustdir_5m,humidity,tempc,rainhourmm,raindailymm,rainindicate,rain5min,pressure,batt_lvl,light_lvl
+80.508186,8.226353,0.00,0,2017-09-29,05:15:51,325,0.0,0.0,0,0.0,270,0.0,0,57.2,34.9,0.000,0.000,0,0.000,0.00,4.31,3.14,

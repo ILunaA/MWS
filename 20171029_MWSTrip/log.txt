@@ -1,0 +1,48 @@
+ Day1: Monday 30 October 2017
+
+Arrived at 10.30, went to hotel.
+The Sparkfun weather shield guys did answer to my email eventually. They will not include a debouncing capacitor on it. So we have to solidify a very long-term temporary solution. I have prepared 5x 0.1uF electrolytic capacitors, bending them to fit the positive (long) leg into PIN2 and the short leg into the GND pin of the weather shield. When doing that, we also need to change the initialisation of the PIN2 (called RAIN in the code) from INPUT_PULLUP to PULLUP. I have done that in the code I am supplying to the stations this time. 
+
+This PM I went to NUWARA and MAHAKAN. Installed the black Arduino Mega and one of the new solar charger CMPT02 in NUWARA. Let see if that makes any difference on top of the additional debouncing capacitors (2x installed). Reloaded on both the previous code.
+
+Day2: Tuesday 31 October 2017
+
+Thirappane farm: added black arduino board, pin2 to gnd 0.1uF capacitor. the solar charger was in OA mode, shut off after overload i think. should be replaced, do not have another one here, so rebooted it, but it will happen again. uploaded previous code.
+
+Nallamudawa rock temple: already black Arduino was there, uploaded previous code. Restarted the Power. Changed Anemometer, new one.
+
+Athuruwella: Added capacitor, switched on the solar charger.
+
+Lunch and checked out from Happy Leoni Hotel. 
+
+Nuwarawewa: Checked with shop owner the other side of the road for rain this morning. Only 5 minutes little rain, something is wrong. Changed the rain gauge and the wind direction sensor. There is a possibility that birds could move the rain gauge by standing on its pole. Eranga a field officer of Nuwarawewa UO is interested, I gave him the old raingauge and my Arduino Uno, I will be in contact with him: erangamailbox@yahoo.com,
+right when we leave at 2PM, it is raining for at least 10 minutes, light rain 4 minutes stopped and start again once more.
+
+We are leaving to Colombo at 2.15PM.
+
+Day3: Thursday 2nd November 2017
+
+Arrived from Colombo at noon.
+
+NUWARA: 
+Changed capacitor to 1 uF
+Changed wind speed sensor
+Uploaded code twice to show Eranga (his brother is in electronics and knows Arduino already)
+
+MAHAKANDARA:
+Received from David the IWMI PC mobile number: +94 76 500 8755, added it to the station
+Changed capacitor to 1 uF
+Changed all sensors
+Changed solar charger
+Added black Arduino
+Removed 220V converter but kept external plug hanging from bpx.
+USB plug different for black Arduino had to modify regulator output cables to jumper cables
+
+NUWARA: 
+Changed code to add the IWMI PC number
+
+Back to Hotel:
+Changing all the codes for ATHURU, NULLA, THIRAPP to include the IWMIPC number
+
+Day4: Friday 3rd November 2017
+
