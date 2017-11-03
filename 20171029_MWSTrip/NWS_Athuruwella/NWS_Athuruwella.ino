@@ -181,7 +181,7 @@ void setup()
 
   pinMode(WSPEED, INPUT_PULLUP); // input from wind meters windspeed sensor
   //pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
-  //using 0.1uF capacitor between PIN2 and GND, does not need PULLUP resistor
+  //using 1uF capacitor between PIN2 and GND, does not need PULLUP resistor
   pinMode(RAIN, INPUT); // input from wind meters rain gauge sensor
 
   pinMode(REFERENCE_3V3, INPUT);
@@ -606,13 +606,13 @@ void sendAlert()
   ss.end();
   delay(500);
   if(GSM_Module_Init() == OK){
-    sendSMS(Mobile_No0, sz);
+    sendSMS(Mobile_No0, sz);//IWMI PC
     delay(1000);
-    sendSMS(Mobile_No2, sz);
+    sendSMS(Mobile_No2, sz);//Lasindu
     delay(1000);
-    sendSMS(Mobile_No7, sz);
+    sendSMS(Mobile_No7, sz);//David
     delay(1000);
-    sendSMS(Mobile_No8, sz);
+    sendSMS(Mobile_No8, sz);//Yann
     delay(1000);
   }
   
@@ -648,13 +648,13 @@ void sendDailyRainSMS(){
   delay(500);
   if(GSM_Module_Init() == OK){
     delay(1000);
-    sendSMS(Mobile_No0, sz);
+    sendSMS(Mobile_No0, sz);//IWMI PC
     delay(1000);
-    sendSMS(Mobile_No2, sz);
+    sendSMS(Mobile_No2, sz);//Lasindu
     delay(1000);
-    sendSMS(Mobile_No7, sz);
+    sendSMS(Mobile_No7, sz);//David
     delay(1000);
-    sendSMS(Mobile_No8, sz);    
+    sendSMS(Mobile_No8, sz);//Yann
     delay(1000);
   }
   Module.Refresh();

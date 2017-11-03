@@ -33,7 +33,7 @@ MAHAKANDARA:
 Received from David the IWMI PC mobile number: +94 76 500 8755, added it to the station
 Changed capacitor to 1 uF
 Changed all sensors
-Changed solar charger
+Changed solar charger with black one
 Added black Arduino
 Removed 220V converter but kept external plug hanging from bpx.
 USB plug different for black Arduino had to modify regulator output cables to jumper cables
@@ -45,4 +45,29 @@ Back to Hotel:
 Changing all the codes for ATHURU, NULLA, THIRAPP to include the IWMIPC number
 
 Day4: Friday 3rd November 2017
+
+THIRAPPANE:
+Changed 2 wind sensors
+Changed solar charger with black one
+Uploaded new IWMI pc number
+
+NALLAMUDAWA:
+Changed 2 wind sensors
+Changed solar charger with black one
+Added 1uF capacitor
+Also new code with IWMI PC
+
+
+ATHURUWELLA:
+Changed 2 wind sensors
+Added 1uF capacitor
+Also new code with IWMI PC
+this does not have the new black solar charger, it will shut down at some point.
+
+going for lunch
+
+Returned to Mahakandarawewa and found out that it was switched off
+Yesterday while upgrading it, the batteries were half.
+THe good news is that it will switch on when sun will come back,
+the bad news is that the system is not power efficient enough.
 
