@@ -142,7 +142,6 @@ void setup()
   digitalWrite(SIM808, HIGH); //SWITCH ON SIM808
   delay(40000); //WAIT FOR SIM808
   //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
-  //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
   //delay(5000); //WAIT FOR SIM808
   //*//Serial.print(sendData(" ", 2000, DEBUG));
   //*//Serial.println(sendData("AT+CMGF=1", 1000, true));
@@ -161,7 +160,7 @@ void setup()
 
   pinMode(WSPEED, INPUT_PULLUP); // input from wind meters windspeed sensor
   //pinMode(RAIN, INPUT_PULLUP); // input from wind meters rain gauge sensor
-  //When using hardware debounce (0.1uF capacitor from PIN2 to GND) no need of PULLUP resistor
+  //When using hardware debounce (1uF capacitor from PIN2 to GND) no need of PULLUP resistor
   pinMode(RAIN, INPUT); // input from wind meters rain gauge sensor
 
   pinMode(REFERENCE_3V3, INPUT);
@@ -244,8 +243,10 @@ void loop()
   }
   rainHour[minutes] = 0; //Zero out this minute's rainfall amount
   windgust_10m[minutes_10m] = 0; //Zero out this minute's gust
-  //DEBUG: Report all readings every loop
+  //DEBUG: Report all readings every loop to Serial
   printWeather();
+  //DEBUG: Report all readings every loop to SMS
+  sendWeather();
   //Wait 1 second, and gather GPS data
   delay(1000);
   //digitalWrite(SIM808, HIGH); //SWITCH ON SIM808
@@ -260,13 +261,15 @@ void loop()
     //Check that the actual hour is incremented from last report
     if (hourReport < gpshour) {
       //Serial.print(F("inside the reporting if 2"));
-      //Report all readings hourly to Serial port
+      //Report all readings hourly to Serial port for OpenLog
       printWeather();
+      //Report all readings every loop to SMS
+      sendWeather();
       //Send daily rain report at 2AM GMT
       if (gpshour == 2) {
         sprintf(sz, "\"%d (%.3f .3%f) : %.3f mm/d\"", STATION_NAME, gpslng, gpslat, dailyrainin); //[4]
         Serial.print(sendData(" ", 2000, DEBUG));
-        Serial.println(sendData("AT+CMGF=1", 1000, true));
+        Serial.println(sendData("AT+CMGF=1", 1000, DEBUG));
         Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
         Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
         ss.write(0x1A);
@@ -279,7 +282,7 @@ void loop()
       if (rainin > 10.0) {
         sprintf(sz, "\"%d : %.3f mm/h\"", STATION_NAME, rainin); //[4]
         Serial.print(sendData(" ", 2000, DEBUG));
-        Serial.println(sendData("AT+CMGF=1", 1000, true));
+        Serial.println(sendData("AT+CMGF=1", 1000, DEBUG));
         Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
         Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
         ss.write(0x1A);
@@ -294,8 +297,6 @@ void loop()
 
 void getgps(int LATLONG)
 {
-  //digitalWrite(SIM808, HIGH); //SWITCH ON SIM808
-  delay(2000);
   String gpsdata = "";
   String gpsdatatmp = "";
   String tmp = "";
@@ -307,9 +308,8 @@ void getgps(int LATLONG)
   {
     //GET GPS DATA
     gpsdata = "";
-    gpsdata.concat(sendData( "AT+CGNSINF", 1000, DEBUG));
+    gpsdata.concat(sendData( "AT+CGNSINF", 2000, DEBUG));
     gpsdatatmp = "";
-    delay(1000);
     gpsdatatmp.concat(gpsdata);
     gpsdatatmp.remove(75);
     //get YEAR
@@ -646,7 +646,7 @@ void sendWeather()
 {
   calcWeather(); //Go calc all the various sensors
   char sz[200];
-  strcpy(sz,mkWeatherString());
+  strcpy(sz, mkWeatherString());
   Serial.print(sendData(" ", 2000, DEBUG));
   Serial.println(sendData("AT+CMGF=1", 1000, true));
   Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
