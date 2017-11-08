@@ -151,6 +151,7 @@ void setup()
   //Serial.println(sendData("AT+CMGS=\"+33785351655\"", 1000, DEBUG));    //Start accepting the text for the message Stef
   //*//Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message Dave
   //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
+  //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
   //*//Serial.println(sendData("\"Yann test mws simduino setup\"", 1000, DEBUG));   //The text for the message
   //*//ss.write(0x1A);
   delay(1000);
@@ -194,22 +195,12 @@ void setup()
   lastSecond = millis();
 
   //CONFIRM BY SMS Lat/Long ARE ACQUIRED
-  //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
-  //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
-  //delay(5000); //WAIT FOR SIM808
   Serial.print(sendData(" ", 2000, DEBUG));
   Serial.println(sendData("AT+CMGF=1", 1000, true));
-  //Serial.println(sendData("AT+CSCA=\"+9477000003\"", 1000, DEBUG));  //Setting for the SMS Message center number,
-  //Note that when specifying a String of characters " is entered as \"
-  //Serial.println(sendData("AT+CMGS=\"+33785351655\"", 1000, DEBUG));    //Start accepting the text for the message Stef
-  Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message Dave
-  //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
-  Serial.println(sendData("\"GPS lat/Long coordinates acquired\"", 1000, DEBUG));   //The text for the message
+  Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
+  Serial.println(sendData("\"SIMDuino: GPS lat/Long coordinates acquired\"", 1000, DEBUG));   //The text for the message
   ss.write(0x1A);
   delay(1000);
-  //DEBUG
-  //Serial.println(freeMemory());
-
 }
 
 void loop()
@@ -273,18 +264,10 @@ void loop()
       printWeather();
       //Send daily rain report at 2AM GMT
       if (gpshour == 2) {
-        sprintf(sz, "\"%d : %.3f mm/d\"", STATION_NAME, dailyrainin); //[4]
-        //CONFIRM BY SMS Lat/Long ARE ACQUIRED
-        //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
-        //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
-        //delay(5000); //WAIT FOR SIM808
+        sprintf(sz, "\"%d (%.3f .3%f) : %.3f mm/d\"", STATION_NAME, gpslng, gpslat, dailyrainin); //[4]
         Serial.print(sendData(" ", 2000, DEBUG));
         Serial.println(sendData("AT+CMGF=1", 1000, true));
-        //Serial.println(sendData("AT+CSCA=\"+9477000003\"", 1000, DEBUG));  //Setting for the SMS Message center number,
-        //Note that when specifying a String of characters " is entered as \"
-        //Serial.println(sendData("AT+CMGS=\"+33785351655\"", 1000, DEBUG));    //Start accepting the text for the message Stef
-        Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message Dave
-        //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
+        Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
         Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
         ss.write(0x1A);
         delay(1000);
@@ -295,17 +278,9 @@ void loop()
       }
       if (rainin > 10.0) {
         sprintf(sz, "\"%d : %.3f mm/h\"", STATION_NAME, rainin); //[4]
-        //CONFIRM BY SMS Lat/Long ARE ACQUIRED
-        //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
-        //Serial.print(sendData("AT+CPIN?", 1000, DEBUG));
-        //delay(5000); //WAIT FOR SIM808
         Serial.print(sendData(" ", 2000, DEBUG));
         Serial.println(sendData("AT+CMGF=1", 1000, true));
-        //Serial.println(sendData("AT+CSCA=\"+9477000003\"", 1000, DEBUG));  //Setting for the SMS Message center number,
-        //Note that when specifying a String of characters " is entered as \"
-        //Serial.println(sendData("AT+CMGS=\"+33785351655\"", 1000, DEBUG));    //Start accepting the text for the message Stef
-        Serial.println(sendData("AT+CMGS=\"+94774496950\"", 1000, DEBUG));    //Start accepting the text for the message Dave
-        //Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
+        Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
         Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
         ss.write(0x1A);
         delay(1000);
@@ -625,62 +600,60 @@ int get_wind_direction()
 
 
 //Prints the various variables directly to the port
-//I don't like the way this function is written but Arduino doesn't support floats under sprintf
+char mkWeatherString() {
+  char sz[200];
+  dtostrf(gpslng, 6, 6, &sz[strlen(sz)]);
+  strcpy(sz, ",");
+  dtostrf(gpslat, 6, 6, &sz[strlen(sz)]);
+  strcpy(sz, ",");
+  dtostrf(gpsalt, 6, 6, &sz[strlen(sz)]);
+  sprintf(sz, ",%d,", gpssat);
+  sprintf(sz, "%02d-%02d-%02d,", gpsyear, gpsmonth, gpsday);//[4]
+  sprintf(sz, "%02d:%02d:%02d,", gpshour, gpsminute, gpssecond);//[5]
+  sprintf(sz, "%d,", get_wind_direction());
+  dtostrf(get_wind_speed(), 4, 2, &sz[strlen(sz)]);
+  strcpy(sz, ",");
+  dtostrf(windgustms, 4, 2, &sz[strlen(sz)]);
+  sprintf(sz, ",%d,", windgustdir);
+  dtostrf(windspdms_avg2m, 4, 2, &sz[strlen(sz)]);
+  sprintf(sz, ",%d,", winddir_avg2m);
+  dtostrf(windgustms_10m, 4, 2, &sz[strlen(sz)]);
+  sprintf(sz, ",%d,", windgustdir_10m);
+  dtostrf(humidity, 4, 2, &sz[strlen(sz)]);
+  strcpy(sz, ",");
+  dtostrf(tempf, 4, 2, &sz[strlen(sz)]);
+  strcpy(sz, ",");
+  dtostrf(rainin, 4, 2, &sz[strlen(sz)]);
+  strcpy(sz, ",");
+  dtostrf(dailyrainin, 4, 2, &sz[strlen(sz)]);
+  strcpy(sz, ",");
+  dtostrf(pressure, 6, 6, &sz[strlen(sz)]);
+  strcpy(sz, ",");
+  dtostrf(batt_lvl, 4, 2, &sz[strlen(sz)]);
+  strcpy(sz, ",");
+  dtostrf(light_lvl, 4, 2, &sz[strlen(sz)]);
+  strcpy(sz, "\n");
+  return (sz);
+}
+
 void printWeather()
 {
   calcWeather(); //Go calc all the various sensors
-
-  Serial.println();
-  Serial.print(gpslng, 6);//[0]
-  Serial.print(",");
-  Serial.print(gpslat, 6);//[1]
-  Serial.print(",");
-  Serial.print(gpsalt);//[2]
-  Serial.print(",");
-  Serial.print(gpssat);//[3]
-
-  char sz[32];
-  Serial.print(",");
-  sprintf(sz, "%02d-%02d-%02d", gpsyear, gpsmonth, gpsday);//[4]
-  Serial.print(sz);
-
-  Serial.print(",");
-  sprintf(sz, "%02d:%02d:%02d", gpshour, gpsminute, gpssecond);//[5]
-  Serial.print(sz);
-
-  Serial.print(",");
-  Serial.print(get_wind_direction());//[6]
-  Serial.print(",");
-  Serial.print(get_wind_speed(), 1);//[7]
-  Serial.print(",");
-  Serial.print(windgustms, 1);//[8]
-  Serial.print(",");
-  Serial.print(windgustdir);//[9]
-  Serial.print(",");
-  Serial.print(windspdms_avg2m, 1);//[10]
-  Serial.print(",");
-  Serial.print(winddir_avg2m);//[11]
-  Serial.print(",");
-  Serial.print(windgustms_10m, 1);//[12]
-  Serial.print(",");
-  Serial.print(windgustdir_10m);//[13]
-  Serial.print(",");
-  Serial.print(humidity, 1);//[14]
-  Serial.print(",");
-  Serial.print(tempf, 1);//[15] Celsius
-  Serial.print(",");
-  Serial.print(rainin, 3);//[16] hourly
-  Serial.print(",");
-  Serial.print(dailyrainin, 3);//[17]
-  Serial.print(",");
-  Serial.print(pressure, 2);//[20]
-  Serial.print(",");
-  Serial.print(batt_lvl, 2);//[21]
-  Serial.print(",");
-  Serial.print(light_lvl, 2);//[22]
-  Serial.print(",");
+  Serial.print(mkWeatherString());
 }
 
+void sendWeather()
+{
+  calcWeather(); //Go calc all the various sensors
+  char sz[200];
+  strcpy(sz,mkWeatherString());
+  Serial.print(sendData(" ", 2000, DEBUG));
+  Serial.println(sendData("AT+CMGF=1", 1000, true));
+  Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
+  Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
+  ss.write(0x1A);
+  delay(1000);
+}
 
 
 
