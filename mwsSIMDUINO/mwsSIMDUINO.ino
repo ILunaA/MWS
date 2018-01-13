@@ -11,6 +11,8 @@
 #include <TinyGPS++.h> //GPS parsing
 
 #define STATION_NAME "simduino"
+//String MoNo = "+94765008755";          // IWMI Computer Mobile Number
+String MoNo = "+94716494873";          // IWMI Yann Mobile Number
 
 #define DEBUG true
 
@@ -196,7 +198,7 @@ void setup()
   //CONFIRM BY SMS Lat/Long ARE ACQUIRED
   Serial.print(sendData(" ", 2000, DEBUG));
   Serial.println(sendData("AT+CMGF=1", 1000, true));
-  Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
+  Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
   Serial.println(sendData("\"SIMDuino: GPS lat/Long coordinates acquired\"", 1000, DEBUG));   //The text for the message
   ss.write(0x1A);
   delay(1000);
@@ -270,7 +272,7 @@ void loop()
         sprintf(sz, "\"%d (%.3f .3%f) : %.3f mm/d\"", STATION_NAME, gpslng, gpslat, dailyrainin); //[4]
         Serial.print(sendData(" ", 2000, DEBUG));
         Serial.println(sendData("AT+CMGF=1", 1000, DEBUG));
-        Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
+        Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
         Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
         ss.write(0x1A);
         delay(1000);
@@ -283,7 +285,7 @@ void loop()
         sprintf(sz, "\"%d : %.3f mm/h\"", STATION_NAME, rainin); //[4]
         Serial.print(sendData(" ", 2000, DEBUG));
         Serial.println(sendData("AT+CMGF=1", 1000, DEBUG));
-        Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
+        Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
         Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
         ss.write(0x1A);
         delay(1000);
@@ -307,50 +309,56 @@ void getgps(int LATLONG)
   do
   {
     //GET GPS DATA
-    gpsdata = "";
-    gpsdata.concat(sendData( "AT+CGNSINF", 2000, DEBUG));
-    gpsdatatmp = "";
-    gpsdatatmp.concat(gpsdata);
-    gpsdatatmp.remove(75);
+    //gpsdata = "";
+    gpsdata = sendData( "AT+CGNSINF", 1000, DEBUG);
+    //gpsdata.concat(sendData( "AT+CGNSINF", 1000, DEBUG));
+    //gpsdatatmp = "";
+    gpsdatatmp = gpsdata;
+    //gpsdatatmp.remove(75);
+    Serial.println(gpsdata);
+    Serial.println(gpsdatatmp);
     //get YEAR
     gpsdatatmp.remove(31);
     gpsdatatmp.remove(0, 27);
     gpsyear = gpsdatatmp.toInt();
+    Serial.println(gpsyear);
     gpsdatatmp = "";
     gpsdatatmp.concat(gpsdata);
     //get MONTH
     gpsdatatmp.remove(33);
     gpsdatatmp.remove(0, 31);
-    gpsmonth = gpsdatatmp.toInt() ;
+    gpsmonth = gpsdatatmp.toInt();
     gpsdatatmp = "";
     gpsdatatmp.concat(gpsdata);
     //get DAY
     gpsdatatmp.remove(35);
     gpsdatatmp.remove(0, 33);
-    gpsday = gpsdatatmp.toInt() ;
+    gpsday = gpsdatatmp.toInt();
     gpsdatatmp = "";
     gpsdatatmp.concat(gpsdata);
     //get HOUR
     gpsdatatmp.remove(37);
     gpsdatatmp.remove(0, 35);
-    gpshour = gpsdatatmp.toInt() ;
+    gpshour = gpsdatatmp.toInt();
     gpsdatatmp = "";
     gpsdatatmp.concat(gpsdata);
     //get MINUTE
     gpsdatatmp.remove(39);
     gpsdatatmp.remove(0, 37);
-    gpsminute = gpsdatatmp.toInt() ;
+    gpsminute = gpsdatatmp.toInt();
     gpsdatatmp = "";
     gpsdatatmp.concat(gpsdata);
     //get SECOND
     gpsdatatmp.remove(41);
     gpsdatatmp.remove(0, 39);
-    gpssecond = gpsdatatmp.toInt() ;
+    gpssecond = gpsdatatmp.toInt();
     gpsdatatmp = "";
-    gpsdatatmp.concat(gpsdata);
+    gpsdatatmp.concat(sendData( "AT+CGNSINF", 1000, DEBUG));
     //Test if there is Lat/Long data
-    tmp = gpsdatatmp[46];
-    if (!tmp.equals(",") && LATLONG == true) {
+    tmp = gpsdatatmp[47];
+    Serial.println(gpsdatatmp[47]);
+    Serial.println(tmp);
+    if (tmp.equals(",") == false && LATLONG == true) {
       //get LAT (8.424)
       gpslat = tmp.toInt();
       tmp = gpsdatatmp[48];
@@ -370,6 +378,8 @@ void getgps(int LATLONG)
       gpslng += 0.01 * tmp.toInt();
       tmp = gpsdatatmp[60];
       gpslng += 0.001 * tmp.toInt();
+      Serial.println(gpslng);
+      Serial.println(gpslat);
       //get ALT
       tmp = gpsdatatmp[66];
       if (tmp.equals(".")) {
@@ -406,7 +416,7 @@ void getgps(int LATLONG)
       gpsdata = "";
     }
   }
-  while (gpsyear < 2017 || gpslng <= 0.01 || gpslat <= 0.01 || gpsalt <= 0.01); // SHOULD BE IN 2017 OR MORE TO BE VALID
+  while (gpsyear < 2017 || gpslng <= 0.01 || gpslat <= 0.01); // SHOULD BE IN 2017 OR MORE TO BE VALID
   switchGPSonoff( "AT+CGNSPWR=0", 1000, DEBUG);
   //FGSM baud rate is 19200 max through software serial
   switchGPSonoff( "AT+UART=19200,8,1,0,0", 1000, DEBUG);
@@ -649,7 +659,7 @@ void sendWeather()
   strcpy(sz, mkWeatherString());
   Serial.print(sendData(" ", 2000, DEBUG));
   Serial.println(sendData("AT+CMGF=1", 1000, true));
-  Serial.println(sendData("AT+CMGS=\"+94773260142\"", 1000, DEBUG));    //Start accepting the text for the message SIRI_SA#4
+  Serial.println(sendData("AT+CMGS=\"+94716494873\"", 1000, DEBUG));    //Start accepting the text for the message YannLK
   Serial.println(sendData(sz, 1000, DEBUG));   //The text for the message
   ss.write(0x1A);
   delay(1000);
